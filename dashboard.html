@@ -340,18 +340,37 @@ async function showAllModels() {
   const d = await api('/v1/all-models');
   const models = d.models || [];
   const kindIcon = {chat: '💬', image: '🖼️', completion: '🧩'};
-  const rows = models.map(m =>
-    `<div style="display:flex;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #1e1e26;font-size:13px">
-      <span>${kindIcon[m.kind]||'💬'} <b style="color:#e4e4e7">${esc(m.display)}</b></span>
-      <code style="font-size:11px">${esc(m.id)}</code>
-    </div>`).join('');
+  // Kelompokkan per POOL KUOTA (sama dengan kartu quota di atas):
+  // - Gemini Pool: semua gemini-* (termasuk image model — share kuota Gemini)
+  // - Third-Party Pool: claude-* + gpt-oss (completion) — satu pool bersama
+  const groups = {};
+  models.forEach(m => {
+    const key = familyOf(m.id);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+  const SECTION_LABEL = { gemini: '💎 Gemini Pool', third: '🔌 Third-Party Pool' };
+  let sectionsHtml = '';
+  Object.keys(SECTION_LABEL).forEach(key => {
+    const items = groups[key];
+    if (!items || !items.length) return;
+    const rows = items.map(m =>
+      `<div style="display:flex;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #1e1e26;font-size:13px">
+        <span>${kindIcon[m.kind]||'💬'} <b style="color:#e4e4e7">${esc(m.display)}</b></span>
+        <code style="font-size:11px">${esc(m.id)}</code>
+      </div>`).join('');
+    sectionsHtml += `<div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#a1a1aa;margin-bottom:6px;padding:0 2px">${SECTION_LABEL[key]} <span style="color:#52525b;font-weight:400">· ${items.length} model</span></div>
+      <div style="border:1px solid #1e1e26;border-radius:8px;overflow:hidden">${rows}</div>
+    </div>`;
+  });
   const m = document.createElement('div');
   m.className = 'modal-bg';
   m.id = 'models-modal';
   m.innerHTML = `<div class="modal" style="max-width:560px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
     <h3>📋 Seluruh Model Upstream (${models.length})</h3>
-    <p style="font-size:12px;color:#71717a;margin-bottom:12px">Daftar lengkap dari Antigravity API — termasuk image & completion. Yang dipakai Hermes cuma 5 model utama.</p>
-    <div style="border:1px solid #1e1e26;border-radius:8px;overflow:hidden">${rows}</div>
+    <p style="font-size:12px;color:#71717a;margin-bottom:12px">Dikelompokkan per pool kuota — Third-Party Pool berisi Claude + GPT-OSS (completion). Yang dipakai Hermes cuma 5 model utama.</p>
+    ${sectionsHtml}
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('models-modal').remove()">Tutup</button>
     </div>
