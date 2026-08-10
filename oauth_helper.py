@@ -6,7 +6,7 @@ CARA KERJA (loopback OAuth — satu-satunya cara yang diterima Google
 untuk client Antigravity):
   1. Jalankan script ini DI VPS.
   2. Dari laptop, buka SSH tunnel:
-        ssh -L 8085:localhost:8085 ubuntu@129.225.6.172
+        ssh -L 8085:localhost:8085 <user>@<ip-vps-kamu>
   3. Buka http://localhost:8085/login di browser laptop.
   4. Login pakai akun Google AI Pro → consent → selesai.
   5. Ulangi langkah 3-4 untuk tiap akun.
