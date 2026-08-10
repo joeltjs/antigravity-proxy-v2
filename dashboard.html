@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antigravity Proxy — Dashboard</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e4e4e7;min-height:100vh;padding:20px}
+  .wrap{max-width:1000px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+  .header h1{font-size:22px;display:flex;align-items:center;gap:8px}
+  .header .tag{background:#1e3a5f;color:#60a5fa;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:#3b82f6;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:.15s}
+  .btn:hover{background:#2563eb;transform:translateY(-1px)}
+  .btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+  .btn-danger{background:#dc2626}.btn-danger:hover{background:#b91c1c}
+  .btn-ghost{background:#27272a;color:#a1a1aa}.btn-ghost:hover{background:#3f3f46;color:#fff}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+  .stat{background:#13131a;border:1px solid #1e1e26;border-radius:12px;padding:16px;text-align:center}
+  .stat .num{font-size:28px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .stat .label{font-size:11px;color:#71717a;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+  .card{background:#13131a;border:1px solid #1e1e26;border-radius:12px;padding:20px;margin-bottom:16px}
+  .card-title{font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+  .acc-card{background:#0f0f15;border:1px solid #1e1e26;border-radius:10px;padding:16px;margin-bottom:12px}
+  .acc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .acc-email{font-size:14px;font-weight:600;font-family:'SF Mono',Consolas,monospace}
+  .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .b-ok{background:#052e16;color:#4ade80}
+  .b-err{background:#450a0a;color:#f87171}
+  .b-off{background:#27272a;color:#71717a}
+  .acc-stats{display:flex;gap:16px;font-size:12px;color:#71717a;margin-bottom:12px}
+  .acc-stats span b{color:#e4e4e7}
+  .quota-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+  .quota-item{background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:10px}
+  .quota-item .qname{font-size:12px;font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between}
+  .quota-item .qbar{height:6px;background:#1e1e26;border-radius:3px;overflow:hidden}
+  .quota-item .qfill{height:100%;border-radius:3px;transition:width .5s}
+  .quota-item .qinfo{font-size:10px;color:#52525b;margin-top:4px}
+  .q-high{background:#4ade80}.q-mid{background:#fbbf24}.q-low{background:#f87171}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  code{background:#1e1e26;padding:2px 6px;border-radius:4px;font-size:12px;color:#fbbf24;font-family:'SF Mono',Consolas,monospace}
+  .endpoint-box{background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:#a1a1aa}
+  .endpoint-box b{color:#e4e4e7}
+  .empty{text-align:center;padding:30px;color:#52525b}
+  .refresh-btn{background:transparent;border:1px solid #1e1e26;color:#71717a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer}
+  .refresh-btn:hover{color:#60a5fa;border-color:#3b82f6}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid #3f3f46;border-top-color:#3b82f6;border-radius:50%;animation:spin .6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:100}
+  .modal{background:#13131a;border:1px solid #27272a;border-radius:12px;padding:24px;width:90%;max-width:460px}
+  .modal h3{font-size:16px;margin-bottom:16px}
+  .modal label{display:block;font-size:12px;color:#71717a;margin-bottom:4px;margin-top:12px}
+  .modal input{width:100%;background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:10px;color:#e4e4e7;font-size:13px;font-family:'SF Mono',Consolas,monospace}
+  .modal input:focus{outline:none;border-color:#3b82f6}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+  .modal .hint{font-size:11px;color:#52525b;margin-top:8px;line-height:1.5}
+  .toast{position:fixed;bottom:20px;right:20px;background:#052e16;border:1px solid #4ade80;color:#4ade80;padding:10px 16px;border-radius:8px;font-size:13px;animation:slideUp .3s;z-index:200}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes pulse-glow{0%,100%{opacity:1;box-shadow:0 0 8px 2px rgba(74,222,128,.6)}50%{opacity:.4;box-shadow:0 0 2px 0 rgba(74,222,128,.2)}}
+  @keyframes pulse-amber{0%,100%{opacity:1;box-shadow:0 0 8px 2px rgba(251,191,36,.5)}50%{opacity:.4;box-shadow:0 0 2px 0 rgba(251,191,36,.15)}}
+  .dot-streaming{background:#4ade80 !important;animation:pulse-glow 1.2s ease-in-out infinite}
+  .dot-connecting{background:#fbbf24 !important;animation:pulse-amber 1.6s ease-in-out infinite}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Active Model Indicator Light -->
+  <div id="active-bar" style="background:#13131a;border:1px solid #1e1e26;border-radius:12px;padding:14px 20px;margin-bottom:20px;transition:border-color .3s">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div id="active-dot" style="width:16px;height:16px;border-radius:50%;background:#3f3f46;flex-shrink:0;transition:background .3s"></div>
+      <div style="flex:1">
+        <div id="active-model" style="font-size:15px;font-weight:800;color:#71717a;font-family:'SF Mono',Consolas,monospace">Idle — menunggu request</div>
+        <div id="active-detail" style="font-size:12px;color:#52525b;margin-top:3px">Lampu menyala saat model sedang konsumsi token</div>
+      </div>
+      <div id="active-status" style="font-size:12px;color:#52525b;text-align:right"></div>
+    </div>
+    <div id="active-extra" style="margin-top:10px;display:none"></div>
+  </div>
+
+  <div class="header">
+    <h1>🚀 Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Klik untuk ganti mode">🔀 Ganti Mode</button>
+      <button class="btn btn-ghost btn-sm" onclick="refreshQuota()">🔄 Refresh Quota</button>
+      <button class="btn btn-sm" onclick="showAddModal()">➕ Add Account</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="s-total">-</div><div class="label">Accounts</div></div>
+    <div class="stat"><div class="num" id="s-active">-</div><div class="label">Active</div></div>
+    <div class="stat"><div class="num" id="s-req">-</div><div class="label">Requests</div></div>
+    <div class="stat"><div class="num" id="s-err">-</div><div class="label">Errors</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>👥 Account Pool</span>
+      <span id="last-refresh" style="font-size:11px;color:#52525b"></span>
+    </div>
+    <div id="accounts"><div class="empty">Loading...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>📜 Live Proxy Logs & Error Tracker</span>
+      <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh Logs</button>
+    </div>
+    <div id="log-box" style="background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;max-height:220px;overflow-y:auto;line-height:1.6;color:#a1a1aa">
+      Log konsol kosong...
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔌 Endpoint</div>
+    <div class="endpoint-box">
+      <b>Base URL:</b> <code id="ep-base"></code><br>
+      <b>Auth:</b> <code>Bearer &lt;API key dari .env → AG_PROXY_API_KEY&gt;</code><br>
+      <b>Models (5):</b> gemini-3.6-flash-high, gemini-3.5-flash-high, gemini-3.1-pro-high, claude-sonnet-4-6-thinking, claude-opus-4-6-thinking<br><br>
+      <b>Test:</b><br>
+      <code id="ep-curl" style="display:block;padding:10px;white-space:pre-wrap"></code>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auth: dashboard memakai httpOnly session cookie (di-set server saat login).
+// TIDAK ADA secret di JS/localStorage — cookie tidak bisa dibaca JavaScript.
+function esc(s) {
+  // HTML-escape semua data dinamis sebelum masuk DOM (anti-XSS)
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+async function api(path, opts={}) {
+  const r = await fetch(path, { credentials: 'same-origin', ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  if (r.status === 401) {
+    showToast('❌ Sesi berakhir — refresh halaman dan login ulang', true);
+    throw new Error('Unauthorized');
+  }
+  if (r.status === 429) {
+    showToast('⏳ Terlalu banyak percobaan — tunggu sebentar', true);
+    throw new Error('Rate limited');
+  }
+  return r.json();
+}
+function fmtTime(s) {
+  if (!s) return 'No reset time';
+  const d = new Date(s);
+  const now = new Date();
+  const diffMs = d - now;
+  const timeStr = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:false});
+  if (diffMs <= 0) return `resets now (at ${timeStr})`;
+  const diffMins = Math.floor(diffMs / 60000);
+  const hrs = Math.floor(diffMins / 60);
+  const mins = diffMins % 60;
+  const cd = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  return `resets in ${cd} (at ${timeStr})`;
+}
+function quotaColor(frac) {
+  if (frac > 0.5) return 'q-high';
+  if (frac > 0.2) return 'q-mid';
+  return 'q-low';
+}
+function familyOf(id) {
+  if (String(id).startsWith('gemini')) return 'gemini';
+  // Claude & gpt-oss share SATU pool third-party (fraction & reset identik)
+  if (String(id).startsWith('claude')) return 'third';
+  if (String(id).startsWith('gpt-oss')) return 'third';
+  return 'internal'; // chat_*/tab_* — autocomplete internal Google, tidak ditampilkan
+}
+const FAMILY_LABEL = { gemini: '💎 Gemini Pool', third: '🔌 Third-Party Pool' };
+// Simpan quota mentah per akun untuk modal "show all"
+window._quotaRaw = [];
+// Kelompokkan quota per keluarga: fraction & resetTime diambil dari pool (semua model dalam keluarga share angka yang sama)
+function groupQuota(quota) {
+  const groups = {};
+  Object.entries(quota||{}).forEach(([id, q]) => {
+    const fam = familyOf(id);
+    if (fam === 'internal') return;
+    if (!groups[fam]) groups[fam] = { frac: 1, resetTime: null, models: [] };
+    groups[fam].frac = Math.min(groups[fam].frac, Number(q.remainingFraction)||0);
+    groups[fam].resetTime = q.resetTime || groups[fam].resetTime;
+    groups[fam].models.push(id);
+  });
+  return groups;
+}
+function showQuotaDetail(idx) {
+  const q = window._quotaRaw[idx] || {};
+  const rows = Object.entries(q)
+    .filter(([id]) => familyOf(id) !== 'internal')
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .map(([id, v]) => {
+      const pct = Math.max(0, Math.min(100, (Number(v.remainingFraction)||0)*100)).toFixed(1);
+      return `<tr><td style="padding:6px 10px;border-bottom:1px solid #1e1e26">${esc(v.displayName||id)}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;text-align:right">${pct}%</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;color:#52525b;font-size:11px">${esc(fmtTime(v.resetTime))}</td></tr>`;
+    }).join('');
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.id = 'quota-modal';
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  m.innerHTML = `<div class="modal">
+    <h3>📊 Semua Limit Model</h3>
+    <div style="max-height:60vh;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="color:#52525b;text-align:left"><th style="padding:6px 10px">Model</th><th style="padding:6px 10px;text-align:right">Sisa</th><th style="padding:6px 10px">Reset</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:14px;text-align:right">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('quota-modal').remove()">Tutup</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function load() {
+  try {
+    const data = await api('/v1/accounts');
+    const accs = data.accounts || [];
+    document.getElementById('strategy-tag').textContent = data.strategy || 'round-robin';
+    currentStrategy = data.strategy || 'round-robin';
+    let totalReq=0, totalErr=0, active=0;
+    const html = accs.length === 0
+      ? '<div class="empty">Belum ada akun. Klik "Add Account" untuk login Google OAuth.</div>'
+      : accs.map((a, idx) => {
+          totalReq += a.requests; totalErr += a.errors;
+          if (!a.disabled && a.has_token) active++;
+          const badge = a.disabled ? '<span class="badge b-off">DISABLED</span>'
+            : a.has_token ? '<span class="badge b-ok">ACTIVE</span>'
+            : '<span class="badge b-err">NO TOKEN</span>';
+          const expMin = a.expires_in > 0 ? Math.floor(a.expires_in/60)+'m' : '-';
+          window._quotaRaw[idx] = a.quota || {};
+          const groups = groupQuota(a.quota);
+          const quotaHtml = Object.keys(groups).length > 0
+            ? '<div class="quota-grid">' + Object.entries(groups).map(([fam,g]) => {
+                const pct = Math.max(0, Math.min(100, g.frac*100)).toFixed(1);
+                return `<div class="quota-item">
+                  <div class="qname"><span>${FAMILY_LABEL[fam]||esc(fam)}</span><span>${pct}%</span></div>
+                  <div class="qbar"><div class="qfill ${quotaColor(g.frac)}" style="width:${pct}%"></div></div>
+                  <div class="qinfo">${g.models.length} model · reset: ${esc(fmtTime(g.resetTime))}</div>
+                </div>`;
+              }).join('') +
+              `<div class="quota-item" style="display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="showQuotaDetail(${idx})">
+                <span style="font-size:12px;color:#a1a1aa">📋 Show all models</span>
+              </div></div>`
+            : '<div style="color:#52525b;font-size:12px">Quota belum di-fetch</div>';
+          return `<div class="acc-card">
+            <div class="acc-header">
+              <span class="acc-email">${esc(a.email)}</span>
+              <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="Lihat seluruh model upstream (chat/image/completion)">📋 Models</button><button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Hapus</button></div>
+            </div>
+            <div class="acc-stats">
+              <span>⏱ Token: <b>${expMin}</b></span>
+              <span>📊 Requests: <b>${a.requests}</b></span>
+              <span>⚠️ Errors: <b>${a.errors}</b></span>
+              ${a.last_error ? `<span style="color:#f87171">❌ ${esc(String(a.last_error).substring(0,50))}</span>` : ''}
+            </div>
+            ${quotaHtml}
+          </div>`;
+        }).join('');
+    document.getElementById('accounts').innerHTML = html;
+    // Simpan index→email map untuk hapus akun (hindari injection via email di onclick)
+    window._accEmails = accs.map(a => a.email);
+    document.getElementById('s-total').textContent = accs.length;
+    document.getElementById('s-active').textContent = active;
+    document.getElementById('s-req').textContent = totalReq;
+    document.getElementById('s-err').textContent = totalErr;
+    document.getElementById('last-refresh').textContent = 'Updated: ' + new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  } catch(e) { console.error(e); }
+}
+async function refreshQuota() {
+  document.getElementById('last-refresh').innerHTML = '<span class="spinner"></span> Refreshing...';
+  await api('/v1/quota', {method:'GET'});
+  load();
+}
+let currentStrategy = 'round-robin';
+async function toggleStrategy() {
+  const newStrategy = currentStrategy === 'round-robin' ? 'sticky' : 'round-robin';
+  const r = await fetch('/v1/strategy', {
+    method: 'PUT',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({strategy: newStrategy})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    currentStrategy = d.strategy;
+    document.getElementById('strategy-tag').textContent = d.strategy;
+    showToast(d.strategy === 'sticky'
+      ? '📌 Mode sticky: pakai 1 akun sampai limit, lalu pindah'
+      : '🔀 Mode round-robin: ganti akun tiap request');
+  }
+}
+async function removeAcc(idx) {
+  // Index-based lookup — email TIDAK pernah masuk ke attribute onclick (anti-injection)
+  const email = window._accEmails && window._accEmails[idx];
+  if (!email) { showToast('❌ Akun tidak ditemukan', true); return; }
+  if (!confirm('Hapus akun '+email+'?')) return;
+  await api('/v1/accounts/remove', {method:'POST', body: JSON.stringify({email})});
+  load();
+}
+function showAddModal() {
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.id = 'add-modal';
+  m.innerHTML = `<div class="modal" onclick="event.stopPropagation()">
+    <h3>➕ Tambah Akun Manual</h3>
+    <p style="font-size:12px;color:#71717a;margin-bottom:8px">Paste email + refresh token dari akun Google AI Pro kamu.</p>
+    <label>Email</label>
+    <input type="text" id="add-email" placeholder="contoh@gmail.com">
+    <label>Refresh Token</label>
+    <input type="text" id="add-token" placeholder="1//0gK..." style="font-size:11px">
+    <div class="hint">Refresh token didapat dari OAuth login. Format: <code>1//0g...</code> (panjang ~100 karakter)</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('add-modal').remove()">Batal</button>
+      <button class="btn btn-sm" onclick="submitAdd()">Tambah</button>
+    </div>
+  </div>`;
+  m.onclick = () => m.remove();
+  document.body.appendChild(m);
+}
+async function submitAdd() {
+  const email = document.getElementById('add-email').value.trim();
+  const token = document.getElementById('add-token').value.trim();
+  if (!email || !token) { alert('Email dan refresh token wajib diisi'); return; }
+  const r = await api('/v1/accounts/add', {method:'POST', body: JSON.stringify({email, refresh_token: token})});
+  document.getElementById('add-modal').remove();
+  if (r.ok) {
+    showToast('✅ Akun ' + email + ' ditambahkan! Total: ' + r.total);
+    load();
+  } else {
+    showToast('❌ ' + (r.error?.message || 'Gagal'), true);
+  }
+}
+async function showAllModels() {
+  const d = await api('/v1/all-models');
+  const models = d.models || [];
+  const kindIcon = {chat: '💬', image: '🖼️', completion: '🧩'};
+  const rows = models.map(m =>
+    `<div style="display:flex;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #1e1e26;font-size:13px">
+      <span>${kindIcon[m.kind]||'💬'} <b style="color:#e4e4e7">${esc(m.display)}</b></span>
+      <code style="font-size:11px">${esc(m.id)}</code>
+    </div>`).join('');
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.id = 'models-modal';
+  m.innerHTML = `<div class="modal" style="max-width:560px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <h3>📋 Seluruh Model Upstream (${models.length})</h3>
+    <p style="font-size:12px;color:#71717a;margin-bottom:12px">Daftar lengkap dari Antigravity API — termasuk image & completion. Yang dipakai Hermes cuma 5 model utama.</p>
+    <div style="border:1px solid #1e1e26;border-radius:8px;overflow:hidden">${rows}</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('models-modal').remove()">Tutup</button>
+    </div>
+  </div>`;
+  m.onclick = () => m.remove();
+  document.body.appendChild(m);
+}
+function showToast(msg, isError) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  if (isError) { t.style.background='#450a0a'; t.style.borderColor='#f87171'; t.style.color='#f87171'; }
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+async function loadLogs() {
+  try {
+    const d = await api('/v1/logs');
+    const logs = d.logs || [];
+    const box = document.getElementById('log-box');
+    if (!logs.length) { box.textContent = 'Belum ada log request.'; return; }
+    box.innerHTML = logs.map(l => {
+      let col = '#a1a1aa';
+      if (l.level === 'ERR') col = '#f87171';
+      if (l.level === 'WARN') col = '#fbbf24';
+      if (l.level === 'INFO') col = '#60a5fa';
+      return `<div style="color:${col}">[${esc(l.ts)}] [${esc(l.level)}] ${esc(l.msg)}</div>`;
+    }).reverse().join('');
+  } catch(e) {}
+}
+async function loadActive() {
+  try {
+    const r = await fetch('/v1/active');
+    const d = await r.json();
+    const dot = document.getElementById('active-dot');
+    const modelEl = document.getElementById('active-model');
+    const detailEl = document.getElementById('active-detail');
+    const statusEl = document.getElementById('active-status');
+    const bar = document.getElementById('active-bar');
+    const extra = document.getElementById('active-extra');
+    if (d.active && d.active.length > 0) {
+      const a = d.active[0];
+      const streaming = a.status === 'streaming';
+      dot.className = streaming ? 'dot-streaming' : 'dot-connecting';
+      bar.style.borderColor = streaming ? '#4ade80' : '#fbbf24';
+      modelEl.textContent = a.model;
+      modelEl.style.color = streaming ? '#4ade80' : '#fbbf24';
+      detailEl.textContent = 'Nyedot akun: ' + a.account;
+      detailEl.style.color = streaming ? '#4ade80' : '#fbbf24';
+      statusEl.textContent = (streaming ? '⚡ Konsumsi token' : '🔌 Connecting') + ' — ' + a.elapsed + 's';
+      // Detail list kalo ada multiple request
+      if (d.active.length > 1) {
+        extra.style.display = 'block';
+        extra.innerHTML = d.active.slice(1).map(x => {
+          const el = document.createElement('div');
+          el.style.cssText = 'font-size:11px;color:#71717a;padding:4px 8px;background:#0a0a0f;border-radius:6px;margin-top:4px';
+          el.innerHTML = '+ <b style="color:#a78bfa"></b> → <span></span> (<span></span>s)';
+          const b = el.querySelector('b'); b.textContent = x.model;
+          const spans = el.querySelectorAll('span');
+          spans[0].textContent = x.account;
+          spans[1].textContent = x.elapsed;
+          return el.outerHTML;
+        }).join('');
+      } else {
+        extra.style.display = 'none';
+      }
+    } else {
+      dot.className = '';
+      dot.style.background = '#3f3f46';
+      bar.style.borderColor = '#1e1e26';
+      modelEl.textContent = 'Idle — menunggu request';
+      modelEl.style.color = '#71717a';
+      detailEl.textContent = 'Lampu menyala saat model sedang konsumsi token';
+      detailEl.style.color = '#52525b';
+      statusEl.textContent = '';
+      extra.style.display = 'none';
+    }
+  } catch(e) {}
+}
+// Isi endpoint dinamis dari origin saat ini — IP/host TIDAK pernah hardcoded di source
+(function fillEndpoint(){
+  const base = location.origin + '/v1';
+  document.getElementById('ep-base').textContent = base;
+  document.getElementById('ep-curl').textContent =
+    'curl ' + base + '/chat/completions \\\n' +
+    '  -H "Authorization: Bearer ***" \\\n' +
+    '  -H "Content-Type: application/json" \\\n' +
+    '  -d \'{"model":"gemini-3.6-flash-high","messages":[{"role":"user","content":"halo"}]}\'';
+})();
+load();
+loadLogs();
+loadActive();
+setInterval(load, 10000);
+setInterval(loadLogs, 8000);
+setInterval(loadActive, 1500);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "port": 20130,
+  "host": "0.0.0.0",
+  "strategy": "round-robin",
+  "max_retries": 3,
+  "api_endpoint": "https://daily-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent",
+  "oauth": {
+    "token_url": "https://oauth2.googleapis.com/token"
+  },
+  "accounts": []
+}

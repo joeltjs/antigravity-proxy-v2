@@ -1,0 +1,16 @@
+[Unit]
+Description=Antigravity Multi-Account Proxy
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ag-proxy
+ExecStart=/usr/bin/python3 -u /home/ubuntu/ag-proxy/server.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/ubuntu/ag-proxy/proxy.log
+StandardError=append:/home/ubuntu/ag-proxy/proxy.log
+
+[Install]
+WantedBy=multi-user.target
