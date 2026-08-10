@@ -170,17 +170,19 @@ function familyOf(id) {
   // Claude & gpt-oss share SATU pool third-party (fraction & reset identik)
   if (String(id).startsWith('claude')) return 'third';
   if (String(id).startsWith('gpt-oss')) return 'third';
-  return 'internal'; // chat_*/tab_* — autocomplete internal Google, tidak ditampilkan
+  // chat_*/tab_* = model internal Google (eksperimen chat internal & tab-completion
+  // di IDE). Selalu 100%, tanpa reset time, maxOutputTokens 0/4096 — pool terpisah.
+  return 'internal';
 }
-const FAMILY_LABEL = { gemini: '💎 Gemini Pool', third: '🔌 Third-Party Pool' };
+const FAMILY_LABEL = { gemini: '💎 Gemini Pool', third: '🔌 Third-Party Pool', internal: '🧪 Google Internal' };
+const FAMILY_ORDER = ['gemini', 'third', 'internal'];
 // Simpan quota mentah per akun untuk modal "show all"
 window._quotaRaw = [];
-// Kelompokkan quota per keluarga: fraction & resetTime diambil dari pool (semua model dalam keluarga share angka yang sama)
+// Kelompokkan quota per pool: fraction & resetTime diambil dari pool (semua model dalam pool share angka yang sama)
 function groupQuota(quota) {
   const groups = {};
   Object.entries(quota||{}).forEach(([id, q]) => {
     const fam = familyOf(id);
-    if (fam === 'internal') return;
     if (!groups[fam]) groups[fam] = { frac: 1, resetTime: null, models: [] };
     groups[fam].frac = Math.min(groups[fam].frac, Number(q.remainingFraction)||0);
     groups[fam].resetTime = q.resetTime || groups[fam].resetTime;
@@ -190,15 +192,23 @@ function groupQuota(quota) {
 }
 function showQuotaDetail(idx) {
   const q = window._quotaRaw[idx] || {};
-  const rows = Object.entries(q)
-    .filter(([id]) => familyOf(id) !== 'internal')
-    .sort((a,b) => a[0].localeCompare(b[0]))
-    .map(([id, v]) => {
+  // Kelompokkan per pool dengan header section
+  const byFam = {};
+  Object.entries(q).forEach(([id, v]) => {
+    const fam = familyOf(id);
+    if (!byFam[fam]) byFam[fam] = [];
+    byFam[fam].push([id, v]);
+  });
+  let rows = '';
+  FAMILY_ORDER.filter(f => byFam[f]).forEach(fam => {
+    rows += `<tr><td colspan="3" style="padding:10px 10px 6px;color:#a1a1aa;font-weight:700;font-size:12px;border-bottom:1px solid #1e1e26">${FAMILY_LABEL[fam]||esc(fam)}</td></tr>`;
+    byFam[fam].sort((a,b) => a[0].localeCompare(b[0])).forEach(([id, v]) => {
       const pct = Math.max(0, Math.min(100, (Number(v.remainingFraction)||0)*100)).toFixed(1);
-      return `<tr><td style="padding:6px 10px;border-bottom:1px solid #1e1e26">${esc(v.displayName||id)}</td>
+      rows += `<tr><td style="padding:6px 10px;border-bottom:1px solid #1e1e26">${esc(v.displayName||id)}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;text-align:right">${pct}%</td>
         <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;color:#52525b;font-size:11px">${esc(fmtTime(v.resetTime))}</td></tr>`;
-    }).join('');
+    });
+  });
   const m = document.createElement('div');
   m.className = 'modal-bg';
   m.id = 'quota-modal';
@@ -236,7 +246,8 @@ async function load() {
           window._quotaRaw[idx] = a.quota || {};
           const groups = groupQuota(a.quota);
           const quotaHtml = Object.keys(groups).length > 0
-            ? '<div class="quota-grid">' + Object.entries(groups).map(([fam,g]) => {
+            ? '<div class="quota-grid">' + FAMILY_ORDER.filter(f => groups[f]).map(fam => {
+                const g = groups[fam];
                 const pct = Math.max(0, Math.min(100, g.frac*100)).toFixed(1);
                 return `<div class="quota-item">
                   <div class="qname"><span>${FAMILY_LABEL[fam]||esc(fam)}</span><span>${pct}%</span></div>
