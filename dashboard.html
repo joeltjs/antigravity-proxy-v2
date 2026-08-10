@@ -82,6 +82,7 @@
   <div class="header">
     <h1>🚀 Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="Daftar semua model upstream per pool (informatif, tanpa persentase)">📋 Models</button>
       <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Klik untuk ganti mode">🔀 Ganti Mode</button>
       <button class="btn btn-ghost btn-sm" onclick="refreshQuota()">🔄 Refresh Quota</button>
       <button class="btn btn-sm" onclick="showAddModal()">➕ Add Account</button>
@@ -262,7 +263,7 @@ async function load() {
           return `<div class="acc-card">
             <div class="acc-header">
               <span class="acc-email">${esc(a.email)}</span>
-              <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="Lihat seluruh model upstream (chat/image/completion)">📋 Models</button><button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Hapus</button></div>
+              <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Hapus</button></div>
             </div>
             <div class="acc-stats">
               <span>⏱ Token: <b>${expMin}</b></span>
