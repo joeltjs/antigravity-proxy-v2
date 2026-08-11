@@ -424,12 +424,12 @@ async function loadActive() {
     if (d.active && d.active.length > 0) {
       const a = d.active[0];
       const streaming = a.status === 'streaming';
-      dot.className = 'dot-streaming';
-      bar.style.borderColor = '#4ade80';
+      dot.className = streaming ? 'dot-streaming' : 'dot-connecting';
+      bar.style.borderColor = streaming ? '#4ade80' : '#fbbf24';
       modelEl.textContent = a.model;
-      modelEl.style.color = '#4ade80';
+      modelEl.style.color = streaming ? '#4ade80' : '#fbbf24';
       detailEl.textContent = 'Account in use: ' + a.account;
-      detailEl.style.color = '#4ade80';
+      detailEl.style.color = streaming ? '#4ade80' : '#fbbf24';
       statusEl.textContent = (streaming ? '⚡ Consuming tokens' : '🔌 Connecting') + ' — ' + a.elapsed + 's';
       // Detail list kalo ada multiple request
       if (d.active.length > 1) {
