@@ -264,8 +264,8 @@ async function load() {
           return `<div class="acc-card">
             <div class="acc-header">
               <span class="acc-email">${esc(a.email)}</span>
-              <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Hapus</button></div>
-            </div>
+              <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Delete</button></div>
+            </div>`
             <div class="acc-stats">
               <span>⏱ Token: <b>${expMin}</b></span>
               <span>📊 Requests: <b>${a.requests}</b></span>
@@ -312,7 +312,7 @@ async function removeAcc(idx) {
   // Index-based lookup — email TIDAK pernah masuk ke attribute onclick (anti-injection)
   const email = window._accEmails && window._accEmails[idx];
   if (!email) { showToast('❌ Akun tidak ditemukan', true); return; }
-  if (!confirm('Hapus akun '+email+'?')) return;
+  if (!confirm('Delete account '+email+'?')) return;
   await api('/v1/accounts/remove', {method:'POST', body: JSON.stringify({email})});
   load();
 }
