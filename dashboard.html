@@ -83,8 +83,8 @@
   <div class="header">
     <h1>🚀 Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="Daftar semua model upstream per pool (informatif, tanpa persentase)">📋 Models</button>
-      <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Klik untuk ganti mode">🔀 Ganti Mode</button>
+      <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">📋 Models</button>
+      <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Click to change routing mode">🔀 Change Mode</button>
       <button class="btn btn-ghost btn-sm" onclick="refreshQuota()">🔄 Refresh Quota</button>
       <button class="btn btn-sm" onclick="showAddModal()">➕ Add Account</button>
     </div>
@@ -154,13 +154,15 @@ function fmtTime(s) {
   const d = new Date(s);
   const now = new Date();
   const diffMs = d - now;
+  const dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'});
   const timeStr = d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', hour12:false});
-  if (diffMs <= 0) return `resets now (at ${timeStr})`;
-  const diffMins = Math.floor(diffMs / 60000);
-  const hrs = Math.floor(diffMins / 60);
-  const mins = diffMins % 60;
-  const cd = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
-  return `resets in ${cd} (at ${timeStr})`;
+  if (diffMs <= 0) return `resets now (${dateStr} ${timeStr})`;
+  const totalHours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(totalHours / 24);
+  const hrs = totalHours % 24;
+  const mins = Math.floor((diffMs % 3600000) / 60000);
+  const cd = days > 0 ? `${days}d ${hrs}h ${mins}m` : (hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`);
+  return `resets in ${cd} (${dateStr} ${timeStr})`;
 }
 function quotaColor(frac) {
   if (frac > 0.5) return 'q-high';
@@ -203,12 +205,10 @@ function showQuotaDetail(idx) {
   });
   let rows = '';
   FAMILY_ORDER.filter(f => byFam[f]).forEach(fam => {
-    rows += `<tr><td colspan="3" style="padding:10px 10px 6px;color:#a1a1aa;font-weight:700;font-size:12px;border-bottom:1px solid #1e1e26">${FAMILY_LABEL[fam]||esc(fam)}</td></tr>`;
+    rows += `<tr><td colspan="2" style="padding:10px 10px 6px;color:#a1a1aa;font-weight:700;font-size:12px;border-bottom:1px solid #1e1e26">${FAMILY_LABEL[fam]||esc(fam)}</td></tr>`;
     byFam[fam].sort((a,b) => a[0].localeCompare(b[0])).forEach(([id, v]) => {
-      const pct = Math.max(0, Math.min(100, (Number(v.remainingFraction)||0)*100)).toFixed(1);
       rows += `<tr><td style="padding:6px 10px;border-bottom:1px solid #1e1e26">${esc(v.displayName||id)}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;text-align:right">${pct}%</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;color:#52525b;font-size:11px">${esc(fmtTime(v.resetTime))}</td></tr>`;
+        <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;color:#52525b;font-size:11px;text-align:right">${esc(fmtTime(v.resetTime))}</td></tr>`;
     });
   });
   const m = document.createElement('div');
@@ -216,15 +216,15 @@ function showQuotaDetail(idx) {
   m.id = 'quota-modal';
   m.onclick = e => { if (e.target === m) m.remove(); };
   m.innerHTML = `<div class="modal">
-    <h3>📊 Semua Limit Model</h3>
+    <h3>📊 All Models List</h3>
     <div style="max-height:60vh;overflow-y:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr style="color:#52525b;text-align:left"><th style="padding:6px 10px">Model</th><th style="padding:6px 10px;text-align:right">Sisa</th><th style="padding:6px 10px">Reset</th></tr></thead>
+        <thead><tr style="color:#52525b;text-align:left"><th style="padding:6px 10px">Model</th><th style="padding:6px 10px;text-align:right">Reset</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
     <div style="margin-top:14px;text-align:right">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('quota-modal').remove()">Tutup</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('quota-modal').remove()">Close</button>
     </div>
   </div>`;
   document.body.appendChild(m);
@@ -258,7 +258,7 @@ async function load() {
                 </div>`;
               }).join('') +
               `<div class="quota-item" style="display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="showQuotaDetail(${idx})">
-                <span style="font-size:12px;color:#a1a1aa">📋 Show all models</span>
+                <span style="font-size:12px;color:#a1a1aa">📋 View all models</span>
               </div></div>`
             : '<div style="color:#52525b;font-size:12px">Quota belum di-fetch</div>';
           return `<div class="acc-card">
