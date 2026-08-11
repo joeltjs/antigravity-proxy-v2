@@ -1101,10 +1101,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
             log_event("INFO", f"⚡ STREAM {model} via {account.email} done")
-            track_end(request_id)
             print(f"  [OK] {account.email} → stream done")
         except Exception as e:
-            track_end(request_id)
             err_chunk = {"id": request_id, "object": "chat.completion.chunk", "created": int(time.time()),
                 "model": model, "choices": [{"index": 0, "delta": {"content": f"\n[Proxy Error: {e}]"}, "finish_reason": "stop"}]}
             try:
@@ -1113,6 +1111,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self.wfile.flush()
             except Exception:
                 pass
+        finally:
+            track_end(request_id)
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
