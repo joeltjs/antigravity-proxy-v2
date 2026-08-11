@@ -140,11 +140,11 @@ async function api(path, opts={}) {
     headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }
   });
   if (r.status === 401) {
-    showToast('❌ Sesi berakhir — refresh halaman dan login ulang', true);
+    showToast('❌ Session expired — refresh page and login again', true);
     throw new Error('Unauthorized');
   }
   if (r.status === 429) {
-    showToast('⏳ Terlalu banyak percobaan — tunggu sebentar', true);
+    showToast('⏳ Too many attempts — please wait a moment', true);
     throw new Error('Rate limited');
   }
   return r.json();
@@ -237,7 +237,7 @@ async function load() {
     currentStrategy = data.strategy || 'round-robin';
     let totalReq=0, totalErr=0, active=0;
     const html = accs.length === 0
-      ? '<div class="empty">Belum ada akun. Klik "Add Account" untuk login Google OAuth.</div>'
+      ? '<div class="empty">No accounts added yet. Click "Add Account" to login via Google OAuth.</div>'
       : accs.map((a, idx) => {
           totalReq += a.requests; totalErr += a.errors;
           if (!a.disabled && a.has_token) active++;
@@ -260,7 +260,7 @@ async function load() {
               `<div class="quota-item" style="display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="showQuotaDetail(${idx})">
                 <span style="font-size:12px;color:#a1a1aa">📋 View all models</span>
               </div></div>`
-            : '<div style="color:#52525b;font-size:12px">Quota belum di-fetch</div>';
+            : '<div style="color:#52525b;font-size:12px">Quota not fetched yet</div>';
           return `<div class="acc-card">
             <div class="acc-header">
               <span class="acc-email">${esc(a.email)}</span>
@@ -311,7 +311,7 @@ async function toggleStrategy() {
 async function removeAcc(idx) {
   // Index-based lookup — email TIDAK pernah masuk ke attribute onclick (anti-injection)
   const email = window._accEmails && window._accEmails[idx];
-  if (!email) { showToast('❌ Akun tidak ditemukan', true); return; }
+  if (!email) { showToast('❌ Account not found', true); return; }
   if (!confirm('Delete account '+email+'?')) return;
   await api('/v1/accounts/remove', {method:'POST', body: JSON.stringify({email})});
   load();
@@ -321,16 +321,16 @@ function showAddModal() {
   m.className = 'modal-bg';
   m.id = 'add-modal';
   m.innerHTML = `<div class="modal" onclick="event.stopPropagation()">
-    <h3>➕ Tambah Akun Manual</h3>
-    <p style="font-size:12px;color:#71717a;margin-bottom:8px">Paste email + refresh token dari akun Google AI Pro kamu.</p>
+    <h3>➕ Add Account Manually</h3>
+    <p style="font-size:12px;color:#71717a;margin-bottom:8px">Paste email + refresh token from your Google AI Pro account.</p>
     <label>Email</label>
-    <input type="text" id="add-email" placeholder="contoh@gmail.com">
+    <input type="text" id="add-email" placeholder="example@gmail.com">
     <label>Refresh Token</label>
     <input type="text" id="add-token" placeholder="1//0gK..." style="font-size:11px">
-    <div class="hint">Refresh token didapat dari OAuth login. Format: <code>1//0g...</code> (panjang ~100 karakter)</div>
+    <div class="hint">Refresh token is obtained from OAuth login. Format: <code>1//0g...</code> (~100 chars)</div>
     <div class="modal-actions">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('add-modal').remove()">Batal</button>
-      <button class="btn btn-sm" onclick="submitAdd()">Tambah</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('add-modal').remove()">Cancel</button>
+      <button class="btn btn-sm" onclick="submitAdd()">Add Account</button>
     </div>
   </div>`;
   m.onclick = () => m.remove();
@@ -339,14 +339,14 @@ function showAddModal() {
 async function submitAdd() {
   const email = document.getElementById('add-email').value.trim();
   const token = document.getElementById('add-token').value.trim();
-  if (!email || !token) { alert('Email dan refresh token wajib diisi'); return; }
+  if (!email || !token) { alert('Email and refresh token are required'); return; }
   const r = await api('/v1/accounts/add', {method:'POST', body: JSON.stringify({email, refresh_token: token})});
   document.getElementById('add-modal').remove();
   if (r.ok) {
-    showToast('✅ Akun ' + email + ' ditambahkan! Total: ' + r.total);
+    showToast('✅ Account ' + email + ' added! Total: ' + r.total);
     load();
   } else {
-    showToast('❌ ' + (r.error?.message || 'Gagal'), true);
+    showToast('❌ ' + (r.error?.message || 'Failed'), true);
   }
 }
 async function showAllModels() {
@@ -373,7 +373,7 @@ async function showAllModels() {
         <code style="font-size:11px">${esc(m.id)}</code>
       </div>`).join('');
     sectionsHtml += `<div style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#a1a1aa;margin-bottom:6px;padding:0 2px">${SECTION_LABEL[key]} <span style="color:#52525b;font-weight:400">· ${items.length} model</span></div>
+      <div style="font-size:12px;font-weight:700;color:#a1a1aa;margin-bottom:6px;padding:0 2px">${SECTION_LABEL[key]} <span style="color:#52525b;font-weight:400">· ${items.length} models</span></div>
       <div style="border:1px solid #1e1e26;border-radius:8px;overflow:hidden">${rows}</div>
     </div>`;
   });
@@ -381,11 +381,11 @@ async function showAllModels() {
   m.className = 'modal-bg';
   m.id = 'models-modal';
   m.innerHTML = `<div class="modal" style="max-width:560px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
-    <h3>📋 Seluruh Model Upstream (${models.length})</h3>
-    <p style="font-size:12px;color:#71717a;margin-bottom:12px">Dikelompokkan per pool kuota — Third-Party Pool berisi Claude + GPT-OSS (completion). Yang dipakai Hermes cuma 5 model utama.</p>
+    <h3>📋 All Upstream Models (${models.length})</h3>
+    <p style="font-size:12px;color:#71717a;margin-bottom:12px">Grouped by quota pool — Third-Party Pool contains Claude + GPT-OSS (completion). Hermes uses 5 main models.</p>
     ${sectionsHtml}
     <div class="modal-actions">
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('models-modal').remove()">Tutup</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('models-modal').remove()">Close</button>
     </div>
   </div>`;
   m.onclick = () => m.remove();
@@ -404,7 +404,7 @@ async function loadLogs() {
     const d = await api('/v1/logs');
     const logs = d.logs || [];
     const box = document.getElementById('log-box');
-    if (!logs.length) { box.textContent = 'Belum ada log request.'; return; }
+    if (!logs.length) { box.textContent = 'No logs yet.'; return; }
     box.innerHTML = logs.map(l => {
       let col = '#a1a1aa';
       if (l.level === 'ERR') col = '#f87171';
@@ -431,9 +431,9 @@ async function loadActive() {
       bar.style.borderColor = streaming ? '#4ade80' : '#fbbf24';
       modelEl.textContent = a.model;
       modelEl.style.color = streaming ? '#4ade80' : '#fbbf24';
-      detailEl.textContent = 'Nyedot akun: ' + a.account;
+      detailEl.textContent = 'Account in use: ' + a.account;
       detailEl.style.color = streaming ? '#4ade80' : '#fbbf24';
-      statusEl.textContent = (streaming ? '⚡ Konsumsi token' : '🔌 Connecting') + ' — ' + a.elapsed + 's';
+      statusEl.textContent = (streaming ? '⚡ Consuming tokens' : '🔌 Connecting') + ' — ' + a.elapsed + 's';
       // Detail list kalo ada multiple request
       if (d.active.length > 1) {
         extra.style.display = 'block';
@@ -454,9 +454,9 @@ async function loadActive() {
       dot.className = '';
       dot.style.background = '#3f3f46';
       bar.style.borderColor = '#1e1e26';
-      modelEl.textContent = 'Idle — menunggu request';
+      modelEl.textContent = 'Idle — waiting for requests';
       modelEl.style.color = '#71717a';
-      detailEl.textContent = 'Lampu menyala saat model sedang konsumsi token';
+      detailEl.textContent = 'Indicator lights up when a model is active';
       detailEl.style.color = '#52525b';
       statusEl.textContent = '';
       extra.style.display = 'none';
