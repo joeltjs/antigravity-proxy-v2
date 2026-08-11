@@ -72,8 +72,8 @@
     <div style="display:flex;align-items:center;gap:14px">
       <div id="active-dot" style="width:16px;height:16px;border-radius:50%;background:#3f3f46;flex-shrink:0;transition:background .3s"></div>
       <div style="flex:1">
-        <div id="active-model" style="font-size:15px;font-weight:800;color:#71717a;font-family:'SF Mono',Consolas,monospace">Idle — menunggu request</div>
-        <div id="active-detail" style="font-size:12px;color:#52525b;margin-top:3px">Lampu menyala saat model sedang konsumsi token</div>
+        <div id="active-model" style="font-size:15px;font-weight:800;color:#71717a;font-family:'SF Mono',Consolas,monospace">Idle — waiting for requests</div>
+        <div id="active-detail" style="font-size:12px;color:#52525b;margin-top:3px">Indicator lights up when a model is active</div>
       </div>
       <div id="active-status" style="font-size:12px;color:#52525b;text-align:right"></div>
     </div>
@@ -262,7 +262,7 @@ async function load() {
             <div class="acc-header">
               <span class="acc-email">${esc(a.email)}</span>
               <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Delete</button></div>
-            </div>`
+            </div>
             <div class="acc-stats">
               <span>⏱ Token: <b>${expMin}</b></span>
               <span>📊 Requests: <b>${a.requests}</b></span>
