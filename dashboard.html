@@ -264,7 +264,7 @@ async function load() {
               <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Delete</button></div>
             </div>
             <div class="acc-stats">
-              <span>⏱ Token: <b>${expMin}</b></span>
+              <span>⏱ Token TTL: <b>${expMin}</b></span>
               <span>📊 Requests: <b>${a.requests}</b></span>
               <span>⚠️ Errors: <b>${a.errors}</b></span>
               ${a.last_error ? `<span style="color:#f87171">❌ ${esc(String(a.last_error).substring(0,50))}</span>` : ''}
