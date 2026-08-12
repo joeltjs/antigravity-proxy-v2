@@ -32,7 +32,7 @@
   .b-off{background:#27272a;color:#71717a}
   .acc-stats{display:flex;gap:16px;font-size:12px;color:#71717a;margin-bottom:12px}
   .acc-stats span b{color:#e4e4e7}
-  .quota-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+  .quota-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
   .quota-item{background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:10px}
   .quota-item .qname{font-size:12px;font-weight:600;margin-bottom:6px;display:flex;justify-content:space-between}
   .quota-item .qbar{height:6px;background:#1e1e26;border-radius:3px;overflow:hidden}
@@ -41,7 +41,7 @@
   .q-high{background:#4ade80}.q-mid{background:#fbbf24}.q-low{background:#f87171}
   .actions{display:flex;gap:8px;flex-wrap:wrap}
   code{background:#1e1e26;padding:2px 6px;border-radius:4px;font-size:12px;color:#fbbf24;font-family:'SF Mono',Consolas,monospace}
-  .endpoint-box{background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:#a1a1aa}
+  .endpoint-box{background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:#a1a1aa;overflow-x:auto}
   .endpoint-box b{color:#e4e4e7}
   .empty{text-align:center;padding:30px;color:#52525b}
   .refresh-btn{background:transparent;border:1px solid #1e1e26;color:#71717a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer}
@@ -122,7 +122,7 @@
       <b>Auth:</b> <code>Bearer &lt;API key dari .env → AG_PROXY_API_KEY&gt;</code><br>
       <b>Models (5):</b> gemini-3.6-flash-high, gemini-3.5-flash-high, gemini-3.1-pro-high, claude-sonnet-4-6-thinking, claude-opus-4-6-thinking<br><br>
       <b>Test:</b><br>
-      <code id="ep-curl" style="display:block;padding:10px;white-space:pre-wrap"></code>
+      <code id="ep-curl" style="display:block;padding:10px;white-space:pre-wrap;word-break:break-word;overflow-x:auto"></code>
     </div>
   </div>
 </div>
