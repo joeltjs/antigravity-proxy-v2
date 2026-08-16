@@ -20,6 +20,7 @@ KEAMANAN:
   - Ada state parameter anti-CSRF, expire 10 menit.
 """
 
+import html
 import http.server
 import json
 import os
@@ -141,7 +142,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if error:
                 self._html(400, PAGE_ERR.format(
                     title="Google menolak login",
-                    detail=f"Error dari Google: {error}. Coba lagi."))
+                    detail=f"Error dari Google: {html.escape(error)}. Coba lagi."))
                 return
             code = qs.get("code", [None])[0]
             state = qs.get("state", [None])[0]

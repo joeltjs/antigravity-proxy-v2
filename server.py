@@ -136,13 +136,32 @@ def _auth_success(ip):
         _auth_failures.pop(ip, None)
 
 
-import hmac as _hmac
-import hashlib as _hashlib
+# Per-session random tokens with expiry. The old design derived ONE static
+# HMAC from the dashboard password — forgeable offline, shared by every
+# browser, never expired, impossible to revoke (Strix finding vuln-0001).
+_SESSION_TOKENS = {}  # token -> expiry ts
+SESSION_TTL = 24 * 3600
 
-def _session_token():
-    """HMAC-signed session cookie value derived from dashboard password.
-    Not the raw password — leaking the cookie does not reveal credentials."""
-    return _hmac.new(DASHBOARD_PASSWORD.encode(), b"ag-proxy-session-v1", _hashlib.sha256).hexdigest()
+
+def _issue_session_token():
+    tok = secrets.token_urlsafe(32)
+    now = time.time()
+    with _auth_lock:
+        for k in [k for k, exp in _SESSION_TOKENS.items() if exp < now]:
+            del _SESSION_TOKENS[k]
+        _SESSION_TOKENS[tok] = now + SESSION_TTL
+    return tok
+
+
+def _session_token_valid(tok):
+    with _auth_lock:
+        exp = _SESSION_TOKENS.get(tok)
+        if exp is None:
+            return False
+        if exp < time.time():
+            del _SESSION_TOKENS[tok]
+            return False
+    return True
 
 
 # ─── Account State ────────────────────────────────────────────────────────────
@@ -660,7 +679,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
         for part in cookie.split(";"):
             part = part.strip()
             if part.startswith("ag_session="):
-                if secrets.compare_digest(part[11:], _session_token()):
+                if _session_token_valid(part[11:]):
                     return True
         return False
 
@@ -823,8 +842,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
             # Content-Security-Policy: block inline injection & external scripts
             self.send_header("Content-Security-Policy",
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'")
-            # Ensure browser has the signed session cookie (httpOnly — JS can't read it)
-            self.send_header("Set-Cookie", f"ag_session={_session_token()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400")
+            # Fresh per-session token (httpOnly — JS can't read it)
+            self.send_header("Set-Cookie", f"ag_session={_issue_session_token()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400")
             self.end_headers()
             self.wfile.write(html)
         except Exception:
@@ -836,14 +855,24 @@ class ProxyHandler(BaseHTTPRequestHandler):
     _oauth_states = {}
 
     def _redirect_uri(self):
-        """Redirect URI: dari .env/env, atau derive dari Host header (tanpa IP hardcoded)."""
+        """Redirect URI: dari .env/env, atau loopback Host (ssh -L flow)."""
         if OAUTH_REDIRECT_URI:
             return OAUTH_REDIRECT_URI
-        host = self.headers.get("Host") or "localhost"
-        scheme = "https" if self.headers.get("X-Forwarded-Proto") == "https" else "http"
-        return f"{scheme}://{host}/auth/callback"
+        # Fallback only ever serves the ssh -L localhost flow. Trusting an
+        # arbitrary Host header here let an attacker point redirect_uri at
+        # their own domain and steal the OAuth code (Strix vuln-0001).
+        host_hdr = self.headers.get("Host") or ""
+        host = host_hdr.split(":")[0]
+        if host not in ("localhost", "127.0.0.1", "[::1]", "::1"):
+            return None
+        return f"http://{host_hdr}/auth/callback"
 
     def _oauth_login(self):
+        redirect_uri = self._redirect_uri()
+        if not redirect_uri:
+            self._send_json(400, {"error": {"message":
+                "Set OAUTH_REDIRECT_URI in .env before using OAuth login"}})
+            return
         state = secrets.token_urlsafe(24)
         self._oauth_states[state] = time.time()
         for k in list(self._oauth_states):
@@ -851,7 +880,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 del self._oauth_states[k]
         params = urllib.parse.urlencode({
             "client_id": OAUTH["client_id"],
-            "redirect_uri": self._redirect_uri(),
+            "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": OAUTH_SCOPES,
             "access_type": "offline",
@@ -877,10 +906,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._send_json(400, {"error": {"message": "Invalid or expired OAuth state"}})
             return
         del self._oauth_states[state]
+        redirect_uri = self._redirect_uri()
+        if not redirect_uri:
+            self._send_json(400, {"error": {"message":
+                "Set OAUTH_REDIRECT_URI in .env before using OAuth login"}})
+            return
         data = urllib.parse.urlencode({
             "client_id": OAUTH["client_id"], "client_secret": OAUTH["client_secret"],
             "code": code, "grant_type": "authorization_code",
-            "redirect_uri": self._redirect_uri()
+            "redirect_uri": redirect_uri
         }).encode()
         req = urllib.request.Request(OAUTH["token_url"], data=data,
             headers={"Content-Type": "application/x-www-form-urlencoded"})
