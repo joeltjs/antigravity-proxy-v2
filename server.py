@@ -103,6 +103,135 @@ def log_event(level, msg):
     print(f"[{ts}] [{level}] {msg}")
 
 
+# ─── Usage Monitor: token stats per completed request ────────────────────────
+# Append-only JSONL log + in-memory daily rollups. /v1/usage always answers
+# from memory; the file is scanned once at most (lazy first access).
+USAGE_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "usage.jsonl")
+USAGE_MAX_BYTES = 5 * 1024 * 1024   # rotate to usage.jsonl.1 above this
+USAGE_KEEP_DAYS = 60                # longest window served
+
+_usage_lock = threading.Lock()
+_usage_days = {}                    # "YYYY-MM-DD" -> {requests, input, output, cached}
+_usage_recent = deque(maxlen=50)    # raw records, oldest first
+_usage_h24 = deque()                # (ts, in, out, cached) for the rolling 24h window
+_usage_loaded = False
+
+
+def _usage_day(ts):
+    return datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+
+
+def _usage_prune_locked(now):
+    # Drop 24h entries and day buckets older than the longest window.
+    cutoff = now - 86400
+    while _usage_h24 and _usage_h24[0][0] < cutoff:
+        _usage_h24.popleft()
+    oldest = _usage_day(now - (USAGE_KEEP_DAYS - 1) * 86400)
+    for k in [k for k in _usage_days if k < oldest]:
+        del _usage_days[k]
+
+
+def _usage_load_locked():
+    # One-time rebuild of rollups from the JSONL file (bounded by the 5MB cap).
+    global _usage_loaded
+    _usage_loaded = True  # set first so a broken file is never re-read per request
+    if not os.path.exists(USAGE_LOG):
+        return
+    now = time.time()
+    try:
+        with open(USAGE_LOG, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except Exception:
+                    continue
+                ts = rec.get("ts", 0)
+                d = _usage_days.setdefault(_usage_day(ts),
+                    {"requests": 0, "input": 0, "output": 0, "cached": 0})
+                d["requests"] += 1
+                d["input"] += rec.get("in", 0)
+                d["output"] += rec.get("out", 0)
+                d["cached"] += rec.get("cached", 0)
+                if now - ts <= 86400:
+                    _usage_h24.append((ts, rec.get("in", 0), rec.get("out", 0), rec.get("cached", 0)))
+                _usage_recent.append(rec)
+        _usage_prune_locked(now)
+    except Exception as e:
+        print(f"  [WARN] Usage load: {e}")
+
+
+def record_usage(model, input_tokens, output_tokens, cached_tokens, status, elapsed_ms):
+    # Additive by design — must never break a response, so guard everything.
+    try:
+        now = time.time()
+        rec = {"ts": round(now, 3), "model": model,
+               "in": int(input_tokens or 0), "out": int(output_tokens or 0),
+               "cached": int(cached_tokens or 0), "status": status,
+               "ms": int(elapsed_ms or 0)}
+        with _usage_lock:
+            if not _usage_loaded:
+                _usage_load_locked()
+            d = _usage_days.setdefault(_usage_day(now),
+                {"requests": 0, "input": 0, "output": 0, "cached": 0})
+            d["requests"] += 1
+            d["input"] += rec["in"]
+            d["output"] += rec["out"]
+            d["cached"] += rec["cached"]
+            _usage_recent.append(rec)
+            _usage_h24.append((now, rec["in"], rec["out"], rec["cached"]))
+            _usage_prune_locked(now)
+            with open(USAGE_LOG, "a") as f:
+                f.write(json.dumps(rec) + "\n")
+            if os.path.getsize(USAGE_LOG) > USAGE_MAX_BYTES:
+                os.replace(USAGE_LOG, USAGE_LOG + ".1")
+    except Exception as e:
+        print(f"  [WARN] Usage record: {e}")
+
+
+def usage_snapshot():
+    # Served entirely from memory: 5 window sums + last 15 requests.
+    now = time.time()
+    with _usage_lock:
+        if not _usage_loaded:
+            _usage_load_locked()
+        _usage_prune_locked(now)
+
+        def blank():
+            return {"requests": 0, "input_tokens": 0, "output_tokens": 0, "cached_tokens": 0}
+
+        windows = {"today": blank(), "h24": blank(), "d7": blank(), "d30": blank(), "d60": blank()}
+        today = datetime.datetime.strptime(_usage_day(now), "%Y-%m-%d")
+        for day, d in _usage_days.items():
+            try:
+                age = (today - datetime.datetime.strptime(day, "%Y-%m-%d")).days
+            except Exception:
+                continue
+            if age < 0 or age >= USAGE_KEEP_DAYS:
+                continue
+            for name, span in (("today", 1), ("d7", 7), ("d30", 30), ("d60", 60)):
+                if age < span:
+                    w = windows[name]
+                    w["requests"] += d["requests"]
+                    w["input_tokens"] += d["input"]
+                    w["output_tokens"] += d["output"]
+                    w["cached_tokens"] += d["cached"]
+        for ts, i, o, c in _usage_h24:
+            w = windows["h24"]
+            w["requests"] += 1
+            w["input_tokens"] += i
+            w["output_tokens"] += o
+            w["cached_tokens"] += c
+        recent = [{"model": r.get("model", ""), "in": r.get("in", 0), "out": r.get("out", 0),
+                   "cached": r.get("cached", 0), "status": r.get("status", ""),
+                   "ts": r.get("ts", 0), "ms": r.get("ms", 0)}
+                  for r in list(_usage_recent)[-15:]]
+        recent.reverse()  # newest first
+    return {"windows": windows, "recent": recent}
+
+
 # ─── Security: brute-force protection & request limits ───────────────────────
 _auth_failures = {}   # ip -> [fail_count, window_start, locked_until]
 _auth_lock = threading.Lock()
@@ -798,6 +927,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"active": active})
             return
 
+        if self.path == "/v1/usage":
+            if not self._check_auth(): return
+            self._send_json(200, usage_snapshot())
+            return
+
         self._send_json(404, {"error": {"message": "Not found"}})
 
     def do_PUT(self):
@@ -1013,6 +1147,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
         model = body.get("model", "gemini-3-flash")
         stream = body.get("stream", False)
         request_id = f"chatcmpl-{int(time.time()*1000)}"
+        usage_start = time.time()  # for usage stats; never affects the request
         print(f"\n[REQ] model={model} stream={stream} msgs={len(body.get('messages',[]))} keys={sorted(body.keys())}")
         # NOTE: debug dump ke /tmp/last_req.json DIHAPUS — request body bisa
         # berisi data sensitif (prompt, tool calls). Enable via env DEBUG_DUMP=1.
@@ -1070,16 +1205,17 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 continue
 
             if stream:
-                self._handle_stream(resp, model, request_id, account)
+                self._handle_stream(resp, model, request_id, account, usage_start)
             else:
-                self._handle_nonstream(resp, model, request_id, account)
+                self._handle_nonstream(resp, model, request_id, account, usage_start)
             return
 
         last_err = account.last_error if account else "No accounts"
         track_end(request_id)
+        record_usage(model, 0, 0, 0, "error", (time.time() - usage_start) * 1000)
         self._send_json(502, {"error": {"message": f"All {MAX_RETRIES} attempts failed. Last: {last_err}"}})
 
-    def _handle_nonstream(self, resp, model, request_id, account):
+    def _handle_nonstream(self, resp, model, request_id, account, started=0.0):
         raw = resp.read().decode()
         try:
             data = json.loads(raw)
@@ -1088,15 +1224,23 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 data = self._merge_chunks(data)
             if "error" in data:
                 track_end(request_id)
+                record_usage(model, 0, 0, 0, "error", (time.time() - started) * 1000)
                 self._send_json(502, {"error": {"message": f"Antigravity: {data['error'].get('message','?')}"}})
                 return
             openai_resp = antigravity_to_openai(data, model, request_id)
+            try:
+                um = data.get("response", {}).get("usageMetadata", {})
+                record_usage(model, um.get("promptTokenCount", 0), um.get("candidatesTokenCount", 0),
+                             um.get("cachedContentTokenCount", 0), "ok", (time.time() - started) * 1000)
+            except Exception:
+                pass  # usage is additive; never fail the response
             log_event("INFO", f"✅ {model} via {account.email} → {openai_resp['usage']['total_tokens']} tokens")
             self._send_json(200, openai_resp, account_email=account.email)
             track_end(request_id)
             print(f"  [OK] {account.email} → {openai_resp['usage']['total_tokens']} tokens")
         except Exception as e:
             track_end(request_id)
+            record_usage(model, 0, 0, 0, "error", (time.time() - started) * 1000)
             self._send_json(500, {"error": {"message": f"Parse error: {e}"}})
 
     def _merge_chunks(self, chunks):
@@ -1119,7 +1263,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 usage = resp["usageMetadata"]
         return {"response": {"candidates": [{"content": {"parts": merged_parts}, "finishReason": "STOP"}], "usageMetadata": usage}}
 
-    def _handle_stream(self, resp, model, request_id, account):
+    def _handle_stream(self, resp, model, request_id, account, started=0.0):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.send_header("Cache-Control", "no-cache")
@@ -1154,9 +1298,17 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.wfile.write(f"data: {json.dumps(final)}\n\n".encode())
             self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
+            # Usage arrives in the final chunk (usageMetadata, no candidates)
+            try:
+                um = state.get("usage", {})
+                record_usage(model, um.get("promptTokenCount", 0), um.get("candidatesTokenCount", 0),
+                             um.get("cachedContentTokenCount", 0), "ok", (time.time() - started) * 1000)
+            except Exception:
+                pass  # usage is additive; never fail the response
             log_event("INFO", f"⚡ STREAM {model} via {account.email} done")
             print(f"  [OK] {account.email} → stream done")
         except Exception as e:
+            record_usage(model, 0, 0, 0, "error", (time.time() - started) * 1000)
             err_chunk = {"id": request_id, "object": "chat.completion.chunk", "created": int(time.time()),
                 "model": model, "choices": [{"index": 0, "delta": {"content": f"\n[Proxy Error: {e}]"}, "finish_reason": "stop"}]}
             try:

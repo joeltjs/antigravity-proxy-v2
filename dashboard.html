@@ -43,6 +43,21 @@
   code{background:#1e1e26;padding:2px 6px;border-radius:4px;font-size:12px;color:#fbbf24;font-family:'SF Mono',Consolas,monospace}
   .endpoint-box{background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:#a1a1aa;overflow-x:auto}
   .endpoint-box b{color:#e4e4e7}
+  /* Usage monitor cards */
+  .usage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .u-card{background:#0f0f15;border:1px solid #1e1e26;border-radius:10px;padding:14px}
+  .u-card .u-period{font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .u-card .u-req{font-size:22px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .u-card .u-req-label{font-size:10px;color:#52525b;margin-bottom:8px}
+  .u-card .u-row{display:flex;justify-content:space-between;font-size:11px;color:#71717a;padding:2px 0}
+  .u-card .u-row b{color:#e4e4e7;font-weight:600}
+  .u-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'SF Mono',Consolas,monospace}
+  .u-table th{text-align:left;color:#52525b;font-weight:600;padding:6px 8px;border-bottom:1px solid #1e1e26;font-size:11px}
+  .u-table td{padding:6px 8px;border-bottom:1px solid #14141c;color:#a1a1aa}
+  .u-table th.num,.u-table td.num{text-align:right}
+  .u-st{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+  .u-st-ok{background:#052e16;color:#4ade80}
+  .u-st-err{background:#450a0a;color:#f87171}
   .empty{text-align:center;padding:30px;color:#52525b}
   .refresh-btn{background:transparent;border:1px solid #1e1e26;color:#71717a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer}
   .refresh-btn:hover{color:#60a5fa;border-color:#3b82f6}
@@ -107,6 +122,26 @@
 
   <div class="card">
     <div class="card-title">
+      <span>📊 Usage Monitor</span>
+      <span id="usage-updated" style="font-size:11px;color:#52525b"></span>
+    </div>
+    <div class="usage-grid" id="usage-cards"></div>
+    <div class="card-title" style="margin-top:6px"><span>Recent Requests</span></div>
+    <div style="overflow-x:auto">
+      <table class="u-table">
+        <thead><tr>
+          <th>When</th><th>Model</th>
+          <th class="num">In</th><th class="num">Out</th><th class="num">Cached</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody id="usage-recent"></tbody>
+      </table>
+    </div>
+    <div id="usage-empty" class="empty" style="display:none">No requests recorded yet.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
       <span>📜 Live Proxy Logs & Error Tracker</span>
       <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh Logs</button>
     </div>
@@ -163,6 +198,25 @@ function fmtTime(s) {
   const mins = Math.floor((diffMs % 3600000) / 60000);
   const cd = days > 0 ? `${days}d ${hrs}h ${mins}m` : (hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`);
   return `resets in ${cd} (${dateStr} ${timeStr})`;
+}
+function fmtTokens(n) {
+  // Human-readable token counts: 1.2K / 3.4M
+  n = Number(n) || 0;
+  if (n >= 1e9) return (n/1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(n);
+}
+function ago(ts) {
+  // Relative time from epoch seconds (e.g. "2m ago", "3h ago")
+  if (!ts) return '';
+  const s = Math.max(0, Math.floor(Date.now()/1000 - ts));
+  if (s < 60) return 'just now';
+  const m = Math.floor(s/60);
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m/60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h/24) + 'd ago';
 }
 function quotaColor(frac) {
   if (frac > 0.5) return 'q-high';
@@ -411,6 +465,40 @@ async function loadLogs() {
     }).reverse().join('');
   } catch(e) {}
 }
+async function loadUsage() {
+  // Polls /v1/usage every 10s — usage changes slowly, no need for faster.
+  try {
+    const d = await api('/v1/usage');
+    const w = d.windows || {};
+    const periods = [['today','Today'],['h24','24H'],['d7','7D'],['d30','30D'],['d60','60D']];
+    document.getElementById('usage-cards').innerHTML = periods.map(([k, label]) => {
+      const x = w[k] || {requests:0, input_tokens:0, output_tokens:0, cached_tokens:0};
+      return `<div class="u-card">
+        <div class="u-period">${label}</div>
+        <div class="u-req">${fmtTokens(x.requests)}</div>
+        <div class="u-req-label">requests</div>
+        <div class="u-row"><span>↓ in</span><b>${fmtTokens(x.input_tokens)}</b></div>
+        <div class="u-row"><span>↑ out</span><b>${fmtTokens(x.output_tokens)}</b></div>
+        <div class="u-row"><span>◔ cached</span><b>${fmtTokens(x.cached_tokens)}</b></div>
+      </div>`;
+    }).join('');
+    const recent = d.recent || [];
+    document.getElementById('usage-empty').style.display = recent.length ? 'none' : 'block';
+    document.getElementById('usage-recent').innerHTML = recent.map(r =>
+      `<tr>
+        <td>${esc(ago(r.ts))}</td>
+        <td>${esc(r.model)}</td>
+        <td class="num">${fmtTokens(r.in)}</td>
+        <td class="num">${fmtTokens(r.out)}</td>
+        <td class="num">${fmtTokens(r.cached)}</td>
+        <td>${r.status === 'ok'
+          ? '<span class="u-st u-st-ok">OK</span>'
+          : '<span class="u-st u-st-err">' + esc(r.status) + '</span>'}</td>
+      </tr>`).join('');
+    document.getElementById('usage-updated').textContent =
+      'Updated: ' + new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  } catch(e) {}
+}
 async function loadActive() {
   try {
     const r = await fetch('/v1/active');
@@ -473,9 +561,11 @@ async function loadActive() {
 load();
 loadLogs();
 loadActive();
+loadUsage();
 setInterval(load, 10000);
 setInterval(loadLogs, 8000);
 setInterval(loadActive, 1500);
+setInterval(loadUsage, 10000);
 </script>
 </body>
 </html>
