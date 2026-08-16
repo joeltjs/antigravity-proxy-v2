@@ -27,8 +27,8 @@ Proxy lightweight Python (100% standard library, tanpa dependensi eksternal) unt
 ### 1. Clone repo
 
 ```bash
-git clone https://github.com/joeltjs/antigravity-proxy.git
-cd antigravity-proxy
+git clone https://github.com/joeltjs/antigravity-proxy-v2.git
+cd antigravity-proxy-v2
 ```
 
 ### 2. Buat file konfigurasi
@@ -50,6 +50,10 @@ Edit `config.json`:
   "accounts": []
 }
 ```
+
+`accounts` mulai kosong — diisi otomatis saat kamu menambah akun (Cara A/B di bawah).
+Setiap entry berbentuk `{ "email": ..., "refresh_token": ..., "disabled": false }`.
+**Jangan pernah commit `config.json`** — sama seperti `.env`, file ini berisi secret.
 
 Edit `.env` — isi secret kamu sendiri (generate API key: `openssl rand -hex 16`):
 
@@ -89,11 +93,11 @@ custom_providers:
     base_url: http://localhost:20130/v1
     key_env: AG_PROXY_API_KEY
     models:
-      - ag2/gemini-3.6-flash-high
-      - ag2/gemini-3.5-flash-high
-      - ag2/gemini-3.1-pro-high
-      - ag2/claude-sonnet-4-6-thinking
-      - ag2/claude-opus-4-6-thinking
+      - gemini-3.6-flash-high
+      - gemini-3.6-flash-tiered
+      - gemini-3.1-pro-high
+      - claude-sonnet-4-6-thinking
+      - claude-opus-4-6-thinking
 ```
 
 ### 2. API key di `~/.hermes/.env`
@@ -118,13 +122,21 @@ hermes model ag2/gemini-3.6-flash-high
 
 Token akan di-refresh otomatis setiap ~1 jam.
 
-### CARA B: Google OAuth Login Flow
+### CARA B: Google OAuth Login (via `oauth_helper.py`)
 
-1. Buka `http://IP-VPS:20130/auth/login`.
-2. Login akun Google AI Pro & beri izin.
-3. Callback otomatis mendaftarkan akun ke pool.
+Google menolak redirect URI non-loopback untuk OAuth client Antigravity, jadi
+login lewat browser hanya bisa dari **localhost** (SSH tunnel):
 
-> Catatan: `OAUTH_REDIRECT_URI` di Google Cloud Console harus cocok dengan URL callback proxy kamu (untuk IP publik, biasanya perlu redirect URI yang terdaftar).
+```bash
+# Dari laptop kamu:
+ssh -L 8085:localhost:8085 user@ip-vps-kamu
+# Di VPS:
+python3 oauth_helper.py
+# Buka di browser laptop: http://localhost:8085/login
+# Login Google → token otomatis masuk ke pool proxy
+```
+
+Ulangi untuk setiap akun. Refresh token tidak pernah meninggalkan VPS.
 
 ## Strategi Rotasi
 
@@ -137,10 +149,10 @@ Ganti kapan saja via tombol **🔀 Ganti Mode** di dashboard.
 
 ## Model yang Didukung
 
-| Nama Hermes | Upstream Antigravity |
+| Nama Model | Upstream Antigravity |
 |---|---|
 | `gemini-3.6-flash-high` | `gemini-3.6-flash-high` |
-| `gemini-3.5-flash-high` | `gemini-3-flash-agent` |
+| `gemini-3.6-flash-tiered` | `gemini-3.6-flash-tiered` |
 | `gemini-3.1-pro-high` | `gemini-pro-agent` |
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
 | `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` |

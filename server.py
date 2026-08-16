@@ -331,8 +331,10 @@ def _save_accounts():
 # ─── Model Mapping ────────────────────────────────────────────────────────────
 
 MODEL_MAP = {
+    "gemini-3.7-flash-high": "gemini-3.7-flash-high",
+    "gemini-3.7-flash": "gemini-3.7-flash",
+    "gemini-3.6-flash-tiered": "gemini-3.6-flash-tiered",
     "gemini-3.6-flash-high": "gemini-3.6-flash-high",
-    "gemini-3.5-flash-high": "gemini-3-flash-agent",
     "gemini-3.1-pro-high": "gemini-pro-agent",
     "claude-sonnet-4-6-thinking": "claude-sonnet-4-6",
     "claude-opus-4-6-thinking": "claude-opus-4-6-thinking",
@@ -341,6 +343,7 @@ MODEL_MAP = {
 # Full upstream catalog (for dashboard "show all models" button).
 # Source: Antigravity API; includes image & completion models not exposed to Hermes.
 FULL_MODEL_CATALOG = [
+    {"id": "gemini-3.6-flash-tiered", "display": "Gemini 3.6 Flash (Tiered)", "kind": "chat"},
     {"id": "gemini-3.6-flash-high", "display": "Gemini 3.6 Flash (High)", "kind": "chat"},
     {"id": "gemini-3.6-flash-medium", "display": "Gemini 3.6 Flash (Medium)", "kind": "chat"},
     {"id": "gemini-3.6-flash-low", "display": "Gemini 3.6 Flash (Low)", "kind": "chat"},
