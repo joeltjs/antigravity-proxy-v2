@@ -460,6 +460,23 @@ def openai_to_antigravity(body):
                         header, b64data = url.split(",", 1)
                         mime = header.split(":")[1].split(";")[0]
                         parts.append({"inlineData": {"mimeType": mime, "data": b64data}})
+                elif p.get("type") == "input_audio":
+                    # OpenAI audio part -> Gemini inlineData. Only runs when
+                    # the request actually carries audio; plain chat is untouched.
+                    audio = p.get("input_audio") or {}
+                    data = audio.get("data")
+                    if data:
+                        fmt = (audio.get("format") or "wav").lower()
+                        mime = {"wav": "audio/wav", "mp3": "audio/mp3", "m4a": "audio/mp4",
+                                "flac": "audio/flac", "ogg": "audio/ogg", "aac": "audio/aac"}.get(fmt, f"audio/{fmt}")
+                        parts.append({"inlineData": {"mimeType": mime, "data": data}})
+                elif p.get("type") == "audio_url":
+                    # Alternate style: base64 data URL
+                    url = (p.get("audio_url") or {}).get("url", "")
+                    if url.startswith("data:"):
+                        header, b64data = url.split(",", 1)
+                        mime = header.split(":")[1].split(";")[0]
+                        parts.append({"inlineData": {"mimeType": mime, "data": b64data}})
         if tool_calls:
             for tc in tool_calls:
                 fn = tc.get("function", {})
