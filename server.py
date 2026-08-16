@@ -224,10 +224,14 @@ def usage_snapshot():
             w["input_tokens"] += i
             w["output_tokens"] += o
             w["cached_tokens"] += c
+        # Filter out zero-token OK noise from recent requests if real requests exist
+        raw_recent = list(_usage_recent)
+        filtered_recent = [r for r in raw_recent if r.get("in", 0) > 0 or r.get("out", 0) > 0 or r.get("status") != "ok"]
+        display_recent = filtered_recent[-15:] if filtered_recent else raw_recent[-15:]
         recent = [{"model": r.get("model", ""), "in": r.get("in", 0), "out": r.get("out", 0),
                    "cached": r.get("cached", 0), "status": r.get("status", ""),
                    "ts": r.get("ts", 0), "ms": r.get("ms", 0)}
-                  for r in list(_usage_recent)[-15:]]
+                  for r in display_recent]
         recent.reverse()  # newest first
     return {"windows": windows, "recent": recent}
 
@@ -713,8 +717,9 @@ def antigravity_chunk_to_openai(chunk_data, model_name, request_id, state):
     response = chunk_data.get("response", {})
     candidates = response.get("candidates", [])
     usage = response.get("usageMetadata", {})
+    if usage:
+        state["usage"] = usage
     if not candidates:
-        if usage: state["usage"] = usage
         return None
     candidate = candidates[0]
     parts = candidate.get("content", {}).get("parts", [])
