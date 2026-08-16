@@ -56,10 +56,11 @@
   .num-in{color:#ff6b4a}
   .num-cached{color:#3b82f6}
   .num-out{color:#22c55e}
-  /* Soft colored account cards & badges */
-  .acc-card{background:rgba(22,25,38,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,0.25)}
-  .badge-internal{background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)}
-  .badge-pool{background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)}
+  /* Pool Group Badges */
+  .pool-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+  .pool-gemini{background:rgba(168,85,247,0.18);color:#d8b4fe;border:1px solid rgba(168,85,247,0.35)}
+  .pool-third{background:rgba(236,72,153,0.18);color:#f472b6;border:1px solid rgba(236,72,153,0.35)}
+  .pool-internal{background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.35)}
   .u-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'SF Mono',Consolas,monospace}
   .u-table th{text-align:left;color:#94a3b8;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
   .u-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:#cbd5e1}
@@ -223,12 +224,9 @@ function fmtTime(s) {
   return `resets in ${cd} (${dateStr} ${timeStr})`;
 }
 function fmtTokens(n) {
-  // Human-readable token counts: 1.2K / 3.4M
+  // Format angka utuh (e.g. 1.159.532) tanpa dibulatkan ke M/K kecuali sangat besar
   n = Number(n) || 0;
-  if (n >= 1e9) return (n/1e9).toFixed(1).replace(/\.0$/, '') + 'B';
-  if (n >= 1e6) return (n/1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1).replace(/\.0$/, '') + 'K';
-  return String(n);
+  return n.toLocaleString('id-ID');
 }
 function ago(ts) {
   // Relative time from epoch seconds (e.g. "2m ago", "3h ago")
@@ -255,7 +253,11 @@ function familyOf(id) {
   // di IDE). Selalu 100%, tanpa reset time, maxOutputTokens 0/4096 — pool terpisah.
   return 'internal';
 }
-const FAMILY_LABEL = { gemini: '💎 Gemini Pool', third: '🔌 Third-Party Pool', internal: '🧪 Google Internal' };
+const FAMILY_LABEL_HTML = {
+  gemini: '<span class="pool-tag pool-gemini">💎 Gemini Pool</span>',
+  third: '<span class="pool-tag pool-third">🔌 Third-Party Pool</span>',
+  internal: '<span class="pool-tag pool-internal">🧪 Google Internal</span>'
+};
 const FAMILY_ORDER = ['gemini', 'third', 'internal'];
 // Simpan quota mentah per akun untuk modal "show all"
 window._quotaRaw = [];
@@ -282,7 +284,7 @@ function showQuotaDetail(idx) {
   });
   let rows = '';
   FAMILY_ORDER.filter(f => byFam[f]).forEach(fam => {
-    rows += `<tr><td colspan="2" style="padding:10px 10px 6px;color:#a1a1aa;font-weight:700;font-size:12px;border-bottom:1px solid #1e1e26">${FAMILY_LABEL[fam]||esc(fam)}</td></tr>`;
+    rows += `<tr><td colspan="2" style="padding:10px 10px 6px;border-bottom:1px solid #1e1e26">${FAMILY_LABEL_HTML[fam]||esc(fam)}</td></tr>`;
     byFam[fam].sort((a,b) => a[0].localeCompare(b[0])).forEach(([id, v]) => {
       rows += `<tr><td style="padding:6px 10px;border-bottom:1px solid #1e1e26">${esc(v.displayName||id)}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;color:#52525b;font-size:11px;text-align:right">${esc(fmtTime(v.resetTime))}</td></tr>`;
@@ -329,7 +331,7 @@ async function load() {
                 const g = groups[fam];
                 const pct = Math.max(0, Math.min(100, g.frac*100)).toFixed(1);
                 return `<div class="quota-item">
-                  <div class="qname"><span>${FAMILY_LABEL[fam]||esc(fam)}</span><span>${pct}%</span></div>
+                  <div class="qname"><span>${FAMILY_LABEL_HTML[fam]||esc(fam)}</span><span>${pct}%</span></div>
                   <div class="qbar"><div class="qfill ${quotaColor(g.frac)}" style="width:${pct}%"></div></div>
                   <div class="qinfo">${g.models.length} model · reset: ${esc(fmtTime(g.resetTime))}</div>
                 </div>`;
@@ -518,9 +520,12 @@ async function loadUsage() {
     document.getElementById('usage-empty').style.display = recent.length ? 'none' : 'block';
     document.getElementById('usage-recent').innerHTML = recent.map(r => {
       const isPool = r.model.includes('3.6') || r.model.includes('3.5') || r.model.includes('flash');
-      const modelTag = isPool
-        ? `<span style="color:#c084fc;font-weight:600">${esc(r.model)}</span> <span class="badge badge-pool" style="font-size:9px;padding:1px 6px">Gemini Pool</span>`
-        : `<span style="color:#38bdf8;font-weight:600">${esc(r.model)}</span> <span class="badge badge-internal" style="font-size:9px;padding:1px 6px">Google OAuth</span>`;
+      const isThird = r.model.includes('claude') || r.model.includes('opus') || r.model.includes('sonnet') || r.model.includes('gpt');
+      const modelTag = isThird
+        ? `<span style="color:#f472b6;font-weight:600">${esc(r.model)}</span> <span class="pool-tag pool-third">Third-Party</span>`
+        : (isPool
+          ? `<span style="color:#d8b4fe;font-weight:600">${esc(r.model)}</span> <span class="pool-tag pool-gemini">Gemini Pool</span>`
+          : `<span style="color:#38bdf8;font-weight:600">${esc(r.model)}</span> <span class="pool-tag pool-internal">Google OAuth</span>`);
       return `<tr>
         <td>${esc(ago(r.ts))}</td>
         <td>${modelTag}</td>
