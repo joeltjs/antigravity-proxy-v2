@@ -10,7 +10,8 @@
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background-color:#0b0c10;background-image:linear-gradient(to right,rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:24px 24px;background-attachment:fixed;color:#e2e8f0;min-height:100vh;padding:24px 16px}
   .wrap{max-width:1040px;margin:0 auto}
   .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;background:rgba(18,20,29,0.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);padding:16px 20px;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-  .header h1{font-size:20px;display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-0.3px}
+  .header h1{font-size:22px;display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-0.4px;background:linear-gradient(135deg,#ffffff 40%,#60a5fa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(96,165,250,0.25)}
+  .header h1 span.header-icon{-webkit-text-fill-color:initial}
   .header .tag{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3);padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600}
   .btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;text-decoration:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .15s ease}
   .btn:hover{background:linear-gradient(135deg,#2563eb,#1d4ed8);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,0.3)}
@@ -51,7 +52,7 @@
   .router-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
   .r-card{background:rgba(18,20,29,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;box-shadow:0 4px 16px rgba(0,0,0,0.3)}
   .r-card .r-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-  .r-card .r-num{font-size:30px;font-weight:800;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .r-card .r-num{font-size:clamp(18px,4.5vw,28px);font-weight:800;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;word-break:break-word}
   .num-req{color:#ffffff}
   .num-in{color:#ff6b4a}
   .num-cached{color:#3b82f6}
@@ -106,7 +107,7 @@
   </div>
 
   <div class="header">
-    <h1>Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
+    <h1><span class="header-icon">🚀</span> Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">Models</button>
       <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Click to change routing mode">Change Mode</button>
@@ -228,13 +229,8 @@ function fmtTime(s) {
   return `resets in ${cd} (${dateStr} ${timeStr})`;
 }
 function fmtTokens(n) {
-  // Tampilkan angka utuh (e.g. 170.483.932). KECUALI jika sudah Billion (>= 1B),
-  // disingkat ke satuan B dengan 2 angka desimal (e.g. 1,25B).
+  // Tulis angka utuh lengkap (e.g. 1.254.000.000 / 170.483.932 / 1.159.532)
   n = Number(n) || 0;
-  if (n >= 1e9) {
-    const b = (n / 1e9).toFixed(2).replace(/\.00$/, '');
-    return b + 'B';
-  }
   return n.toLocaleString('id-ID');
 }
 function ago(ts) {
