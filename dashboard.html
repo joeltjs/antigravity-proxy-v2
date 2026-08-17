@@ -56,11 +56,11 @@
   .num-in{color:#ff6b4a}
   .num-cached{color:#3b82f6}
   .num-out{color:#22c55e}
-  /* Pool Group Badges */
-  .pool-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-  .pool-gemini{background:rgba(168,85,247,0.18);color:#d8b4fe;border:1px solid rgba(168,85,247,0.35)}
-  .pool-third{background:rgba(236,72,153,0.18);color:#f472b6;border:1px solid rgba(236,72,153,0.35)}
-  .pool-internal{background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid rgba(56,189,248,0.35)}
+  /* Clean text-only colored tags (no background, no icons, bold) */
+  .pool-tag{display:inline-block;font-size:11px;font-weight:700}
+  .pool-gemini{color:#c084fc}
+  .pool-third{color:#f472b6}
+  .pool-internal{color:#38bdf8}
   .u-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'SF Mono',Consolas,monospace}
   .u-table th{text-align:left;color:#94a3b8;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
   .u-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:#cbd5e1}
@@ -263,9 +263,9 @@ function familyOf(id) {
   return 'internal';
 }
 const FAMILY_LABEL_HTML = {
-  gemini: '<span class="pool-tag pool-gemini">💎 Gemini Pool</span>',
-  third: '<span class="pool-tag pool-third">🔌 Third-Party Pool</span>',
-  internal: '<span class="pool-tag pool-internal">🧪 Google Internal</span>'
+  gemini: '<span class="pool-tag pool-gemini">Gemini Pool</span>',
+  third: '<span class="pool-tag pool-third">Third-Party Pool</span>',
+  internal: '<span class="pool-tag pool-internal">Google Internal</span>'
 };
 const FAMILY_ORDER = ['gemini', 'third', 'internal'];
 // Simpan quota mentah per akun untuk modal "show all"
