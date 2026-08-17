@@ -224,8 +224,13 @@ function fmtTime(s) {
   return `resets in ${cd} (${dateStr} ${timeStr})`;
 }
 function fmtTokens(n) {
-  // Format angka utuh (e.g. 1.159.532) tanpa dibulatkan ke M/K kecuali sangat besar
+  // Tampilkan angka utuh (e.g. 170.483.932). KECUALI jika sudah Billion (>= 1B),
+  // disingkat ke satuan B dengan 2 angka desimal (e.g. 1,25B).
   n = Number(n) || 0;
+  if (n >= 1e9) {
+    const b = (n / 1e9).toFixed(2).replace(/\.00$/, '');
+    return b + 'B';
+  }
   return n.toLocaleString('id-ID');
 }
 function ago(ts) {
