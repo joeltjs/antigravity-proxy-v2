@@ -526,13 +526,13 @@ async function loadUsage() {
     const recent = d.recent || [];
     document.getElementById('usage-empty').style.display = recent.length ? 'none' : 'block';
     document.getElementById('usage-recent').innerHTML = recent.map(r => {
-      const isPool = r.model.includes('3.6') || r.model.includes('3.5') || r.model.includes('flash');
       const isThird = r.model.includes('claude') || r.model.includes('opus') || r.model.includes('sonnet') || r.model.includes('gpt');
+      const isPool = r.model.includes('3.6') || r.model.includes('3.5') || r.model.includes('flash');
       const modelTag = isThird
-        ? `<span style="color:#ff2d55;font-weight:800;font-size:13px">${esc(r.model)}</span> <span class="pool-tag pool-third">Third-Party</span>`
+        ? `<span style="color:#ff2d55;font-weight:800;font-size:13px">${esc(r.model)}</span>`
         : (isPool
-          ? `<span style="color:#00b0ff;font-weight:800;font-size:13px">${esc(r.model)}</span> <span class="pool-tag pool-gemini">Gemini Pool</span>`
-          : `<span style="color:#00e676;font-weight:800;font-size:13px">${esc(r.model)}</span> <span class="pool-tag pool-internal">Google OAuth</span>`);
+          ? `<span style="color:#00b0ff;font-weight:800;font-size:13px">${esc(r.model)}</span>`
+          : `<span style="color:#00e676;font-weight:800;font-size:13px">${esc(r.model)}</span>`);
       return `<tr>
         <td>${esc(ago(r.ts))}</td>
         <td>${modelTag}</td>
