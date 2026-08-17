@@ -56,11 +56,11 @@
   .num-in{color:#ff6b4a}
   .num-cached{color:#3b82f6}
   .num-out{color:#22c55e}
-  /* Clean text-only colored tags (no background, no icons, bold) */
-  .pool-tag{display:inline-block;font-size:11px;font-weight:700}
-  .pool-gemini{color:#38bdf8}
-  .pool-third{color:#f87171}
-  .pool-internal{color:#4ade80}
+  /* Clean text-only vibrant colored tags (bold & enlarged) */
+  .pool-tag{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.3px}
+  .pool-gemini{color:#00b0ff;text-shadow:0 0 10px rgba(0,176,255,0.4)}
+  .pool-third{color:#ff2d55;text-shadow:0 0 10px rgba(255,45,85,0.4)}
+  .pool-internal{color:#00e676;text-shadow:0 0 10px rgba(0,230,118,0.4)}
   .u-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'SF Mono',Consolas,monospace}
   .u-table th{text-align:left;color:#94a3b8;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
   .u-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:#cbd5e1}
@@ -531,10 +531,10 @@ async function loadUsage() {
       const isPool = r.model.includes('3.6') || r.model.includes('3.5') || r.model.includes('flash');
       const isThird = r.model.includes('claude') || r.model.includes('opus') || r.model.includes('sonnet') || r.model.includes('gpt');
       const modelTag = isThird
-        ? `<span style="color:#f87171;font-weight:600">${esc(r.model)}</span> <span class="pool-tag pool-third">Third-Party</span>`
+        ? `<span style="color:#ff2d55;font-weight:800;font-size:13px">${esc(r.model)}</span> <span class="pool-tag pool-third">Third-Party</span>`
         : (isPool
-          ? `<span style="color:#38bdf8;font-weight:600">${esc(r.model)}</span> <span class="pool-tag pool-gemini">Gemini Pool</span>`
-          : `<span style="color:#4ade80;font-weight:600">${esc(r.model)}</span> <span class="pool-tag pool-internal">Google OAuth</span>`);
+          ? `<span style="color:#00b0ff;font-weight:800;font-size:13px">${esc(r.model)}</span> <span class="pool-tag pool-gemini">Gemini Pool</span>`
+          : `<span style="color:#00e676;font-weight:800;font-size:13px">${esc(r.model)}</span> <span class="pool-tag pool-internal">Google OAuth</span>`);
       return `<tr>
         <td>${esc(ago(r.ts))}</td>
         <td>${modelTag}</td>
