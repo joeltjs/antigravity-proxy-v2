@@ -23,7 +23,8 @@
   .stat .num{font-size:26px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
   .stat .label{font-size:11px;color:#94a3b8;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
   .card{background:rgba(18,20,29,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-  .card-title{font-size:15px;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;font-weight:800;background:linear-gradient(135deg,#ffffff 50%,#38bdf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .card-title{font-size:15px;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;font-weight:800}
+  .card-title .icon{display:inline-block;margin-right:6px;-webkit-text-fill-color:initial;font-size:16px}
   .card-title span.title-txt{background:linear-gradient(135deg,#ffffff 50%,#38bdf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
   .acc-card{background:rgba(12,14,22,0.8);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;margin-bottom:14px}
   .acc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
@@ -126,16 +127,16 @@
 
   <div class="card">
     <div class="card-title">
-      <span class="title-txt">👥 Account Pool</span>
-      <span id="last-refresh" style="font-size:11px;color:#94a3b8;-webkit-text-fill-color:initial"></span>
+      <div><span class="icon">👥</span><span class="title-txt">Account Pool</span></div>
+      <span id="last-refresh" style="font-size:11px;color:#94a3b8"></span>
     </div>
     <div id="accounts"><div class="empty">Loading...</div></div>
   </div>
 
   <div class="card">
     <div class="card-title">
-      <span class="title-txt">📊 Usage Monitor</span>
-      <span id="usage-updated" style="font-size:11px;color:#94a3b8;-webkit-text-fill-color:initial"></span>
+      <div><span class="icon">📊</span><span class="title-txt">Usage Monitor</span></div>
+      <span id="usage-updated" style="font-size:11px;color:#94a3b8"></span>
     </div>
     <!-- 9router Style Timeframe Selector -->
     <div class="tf-bar">
@@ -152,7 +153,7 @@
       <div class="r-card"><div class="r-label">CACHED TOKENS</div><div class="r-num num-cached" id="m-cached">0</div></div>
       <div class="r-card"><div class="r-label">OUTPUT TOKENS</div><div class="r-num num-out" id="m-out">0</div></div>
     </div>
-    <div class="card-title" style="margin-top:14px"><span class="title-txt">🕒 Recent Requests</span></div>
+    <div class="card-title" style="margin-top:14px"><div><span class="icon">🕒</span><span class="title-txt">Recent Requests</span></div></div>
     <div style="overflow-x:auto">
       <table class="u-table">
         <thead><tr>
@@ -168,7 +169,7 @@
 
   <div class="card">
     <div class="card-title">
-      <span class="title-txt">📜 Live Proxy Logs & Error Tracker</span>
+      <div><span class="icon">📜</span><span class="title-txt">Live Proxy Logs & Error Tracker</span></div>
       <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh Logs</button>
     </div>
     <div id="log-box" style="background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;max-height:220px;overflow-y:auto;line-height:1.6;color:#a1a1aa">
@@ -177,7 +178,7 @@
   </div>
 
   <div class="card">
-    <div class="card-title"><span class="title-txt">🔌 Endpoint</span></div>
+    <div class="card-title"><div><span class="icon">🔌</span><span class="title-txt">Endpoint</span></div></div>
     <div class="endpoint-box">
       <b>Base URL:</b> <code id="ep-base"></code><br>
       <b>Auth:</b> <code>Bearer &lt;API key dari .env → AG_PROXY_API_KEY&gt;</code><br>
