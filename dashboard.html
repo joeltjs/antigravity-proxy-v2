@@ -106,12 +106,12 @@
   </div>
 
   <div class="header">
-    <h1>🚀 Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
+    <h1>Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">📋 Models</button>
-      <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Click to change routing mode">🔀 Change Mode</button>
-      <button class="btn btn-ghost btn-sm" onclick="refreshQuota()">🔄 Refresh Quota</button>
-      <button class="btn btn-sm" onclick="showAddModal()">➕ Add Account</button>
+      <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">Models</button>
+      <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Click to change routing mode">Change Mode</button>
+      <button class="btn btn-ghost btn-sm" onclick="refreshQuota()">Refresh Quota</button>
+      <button class="btn btn-sm" onclick="showAddModal()">Add Account</button>
     </div>
   </div>
 
@@ -124,7 +124,7 @@
 
   <div class="card">
     <div class="card-title">
-      <span>👥 Account Pool</span>
+      <span>Account Pool</span>
       <span id="last-refresh" style="font-size:11px;color:#52525b"></span>
     </div>
     <div id="accounts"><div class="empty">Loading...</div></div>
@@ -132,7 +132,7 @@
 
   <div class="card">
     <div class="card-title">
-      <span>📊 Usage Monitor</span>
+      <span>Usage Monitor</span>
       <span id="usage-updated" style="font-size:11px;color:#94a3b8"></span>
     </div>
     <!-- 9router Style Timeframe Selector -->
@@ -166,8 +166,8 @@
 
   <div class="card">
     <div class="card-title">
-      <span>📜 Live Proxy Logs & Error Tracker</span>
-      <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh Logs</button>
+      <span>Live Proxy Logs & Error Tracker</span>
+      <button class="refresh-btn" onclick="loadLogs()">Refresh Logs</button>
     </div>
     <div id="log-box" style="background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;max-height:220px;overflow-y:auto;line-height:1.6;color:#a1a1aa">
       Log konsol kosong...
@@ -175,7 +175,7 @@
   </div>
 
   <div class="card">
-    <div class="card-title">🔌 Endpoint</div>
+    <div class="card-title">Endpoint</div>
     <div class="endpoint-box">
       <b>Base URL:</b> <code id="ep-base"></code><br>
       <b>Auth:</b> <code>Bearer &lt;API key dari .env → AG_PROXY_API_KEY&gt;</code><br>
@@ -342,7 +342,7 @@ async function load() {
                 return `<div class="quota-item">
                   <div class="qname"><span>${FAMILY_LABEL_HTML[fam]||esc(fam)}</span><span>${pct}%</span></div>
                   <div class="qbar"><div class="qfill ${quotaColor(g.frac)}" style="width:${pct}%"></div></div>
-                  <div class="qinfo">${g.models.length} model · reset: ${esc(fmtTime(g.resetTime))}</div>
+                  <div class="qinfo">reset: ${esc(fmtTime(g.resetTime))}</div>
                 </div>`;
               }).join('') + '</div>'
             : '<div style="color:#52525b;font-size:12px">Quota not fetched yet</div>';
