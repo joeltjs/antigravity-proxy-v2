@@ -836,9 +836,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._send_json(429, {"error": {"message": "Too many failed attempts. Try again later."}})
             return False
         if self._cookie_session_ok() or self._bearer_ok():
-            _auth_success(ip)
             return True
-        _auth_fail(ip)
+        # Missing or expired session cookie on API call should return 401, NOT count as a password brute-force failure
         self._send_json(401, {"error": {"message": "Invalid or missing credentials"}})
         return False
 

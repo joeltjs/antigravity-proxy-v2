@@ -199,6 +199,10 @@ async function api(path, opts={}) {
     headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }
   });
   if (r.status === 401) {
+    if (window._loadTimer) clearInterval(window._loadTimer);
+    if (window._logsTimer) clearInterval(window._logsTimer);
+    if (window._activeTimer) clearInterval(window._activeTimer);
+    if (window._usageTimer) clearInterval(window._usageTimer);
     showToast('❌ Session expired — refresh page and login again', true);
     throw new Error('Unauthorized');
   }
@@ -609,10 +613,10 @@ load();
 loadLogs();
 loadActive();
 loadUsage();
-setInterval(load, 10000);
-setInterval(loadLogs, 8000);
-setInterval(loadActive, 1500);
-setInterval(loadUsage, 10000);
+window._loadTimer = setInterval(load, 10000);
+window._logsTimer = setInterval(loadLogs, 8000);
+window._activeTimer = setInterval(loadActive, 1500);
+window._usageTimer = setInterval(loadUsage, 10000);
 </script>
 </body>
 </html>
