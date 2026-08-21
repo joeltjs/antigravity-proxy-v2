@@ -1,39 +1,38 @@
 # 🚀 Antigravity Multi-Account Proxy
 
-Proxy lightweight Python (100% standard library, tanpa dependensi eksternal) untuk **Google AI Pro / Antigravity**.
+Lightweight Python proxy (100% standard library, zero external dependencies) for **Google AI Pro / Antigravity**.
 
-## Fitur Utama
+## Core Features
 
-- 🔄 **Multi-Account Round-Robin & Sticky Failover** — rotasi otomatis antar akun Google AI Pro.
-- ⚡ **Auto-Failover 429 / Rate Limit** — akun kena 429 → cooldown 5 menit → request otomatis dilempar ke akun lain.
-- 🧠 **OpenAI Compatible API** — format `/v1/chat/completions` yang kompatibel dengan Hermes, OpenWebUI, Cursor, LangChain, dll.
-- 🛡️ **Zero Dependencies** — murni `http.server` & `urllib` bawaan Python 3.
-- 📊 **Dashboard UI** — kuota per model, status token, live log konsol, indikator request aktif (model + akun yang sedang konsumsi token), toggle strategi rotasi.
-- 🔧 **Tool Use Conversion** — konversi otomatis tool calls OpenAI → Antigravity `functionCall` dengan `thoughtSignature` & `functionResponse`.
+- 🔄 **Multi-Account Round-Robin & Sticky Failover** — Automatic rotation across Google AI Pro accounts.
+- ⚡ **Auto-Failover on Rate Limits (429)** — Account hit 429 → 5-minute cooldown → Request rerouted to next available account.
+- 🧠 **OpenAI Compatible API** — `/v1/chat/completions` endpoint supporting Hermes, OpenWebUI, Cursor, LangChain, etc.
+- 🛡️ **Zero External Dependencies** — Built exclusively with Python 3 standard library (`http.server` & `urllib`).
+- 📊 **Dashboard & Usage Monitor** — Per-model quota bars, active request state, real-time log stream, and token usage analytics.
+- 🔧 **Tool Use Conversion** — Converts OpenAI tool calls to Antigravity `functionCall` format with `thoughtSignature` support.
 
-## Keamanan (Hardened)
+## Security Controls
 
-- 🔑 **Semua secret di `.env`** — API key, password dashboard, dan OAuth credentials tidak pernah masuk git (`.env` di-gitignore; `.env.example` sebagai template).
-- 🚫 **Anti-XSS** — semua data dinamis di dashboard di-escape; server mengirim `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
-- 🔒 **Anti-Brute-Force** — 5x gagal auth → IP lockout 15 menit (berlaku untuk API key & dashboard login).
-- ⏱️ **Constant-Time Comparison** — perbandingan secret pakai `secrets.compare_digest` (anti timing attack).
-- 🍪 **Session Cookie httpOnly + SameSite=Strict** — dashboard browser tidak menyimpan secret di JavaScript/localStorage; cookie tidak bisa dibaca JS.
-- 📏 **Request Body Limit** — 25 MB untuk chat, 64 KB untuk endpoint admin (anti DoS).
-- 🧹 **Input Validation** — email akun divalidasi & ditolak jika mengandung karakter kontrol/HTML (anti injection).
-- 🌐 **Error Sanitization** — error internal tidak pernah dibocorkan ke client.
+- 🔑 **Secrets Isolation** — API keys, passwords, and OAuth credentials load from `.env` (git-ignored). `.env.example` provided as template.
+- 🚫 **XSS & Header Protections** — Escaped dynamic strings; `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` headers.
+- 🔒 **Brute-Force Protection** — 5 consecutive auth failures trigger a 15-minute IP lockout across API and dashboard endpoints.
+- ⏱️ **Constant-Time Comparison** — Secret comparison uses `secrets.compare_digest` to prevent timing attacks.
+- 🍪 **Secure Session Cookies** — `HttpOnly` and `SameSite=Strict` flags applied to dashboard session cookies.
+- 📏 **Request Payload Limits** — 25 MB cap for chat completions, 64 KB cap for administrative endpoints.
+- 🧹 **Input Sanitization** — Account emails validated against HTML/control characters to prevent injection attacks.
 
-## Instalasi (VPS / Server)
+## Setup Instructions
 
-### 1. Clone repo
+### 1. Clone Repository
 
 ```bash
 git clone https://github.com/joeltjs/antigravity-proxy-v2.git
 cd antigravity-proxy-v2
 ```
 
-### 2. Buat file konfigurasi
+### 2. Configure Environment
 
-Salin template, lalu isi:
+Copy template files:
 
 ```bash
 cp config.example.json config.json
@@ -51,23 +50,19 @@ Edit `config.json`:
 }
 ```
 
-`accounts` mulai kosong — diisi otomatis saat kamu menambah akun (Cara A/B di bawah).
-Setiap entry berbentuk `{ "email": ..., "refresh_token": ..., "disabled": false }`.
-**Jangan pernah commit `config.json`** — sama seperti `.env`, file ini berisi secret.
+The `accounts` array populates automatically when adding accounts via dashboard or API.
 
-Edit `.env` — isi secret kamu sendiri (generate API key: `openssl rand -hex 16`):
+Edit `.env` and set your credentials (generate API key with `openssl rand -hex 16`):
 
 ```env
-AG_PROXY_API_KEY=***
+AG_PROXY_API_KEY=your_generated_api_key
 AG_DASHBOARD_USER=admin
-AG_DASHBOARD_PASSWORD=your-d…here
-OAUTH_ACCESS_KEY=your-o…here
-OAUTH_SECRET_KEY=your-o…here
+AG_DASHBOARD_PASSWORD=your_secure_password
 ```
 
-> ⚠️ **Jangan pernah commit `.env`.** File `.gitignore` sudah melindungi, tapi selalu cek `git status` sebelum push.
+> **Optional OAuth Setup:** If you want web-based Google OAuth authentication (similar to 9router), fill in `OAUTH_ACCESS_KEY`, `OAUTH_SECRET_KEY`, and `OAUTH_REDIRECT_URI` in `.env`. If left empty, manual refresh token addition remains fully functional.
 
-### 3. Pasang systemd service
+### 3. Deploy Systemd Service
 
 ```bash
 sudo cp ag-proxy.service /etc/systemd/system/
@@ -75,81 +70,53 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now ag-proxy
 ```
 
-Cek status:
+Verify service status:
 
 ```bash
 sudo systemctl status ag-proxy
 ```
 
-Akses dashboard: `http://IP-VPS-KAMU:20130` — login dengan user & password dari `.env`.
+Access dashboard at `http://YOUR-SERVER-IP:20130` using the Basic Auth credentials set in `.env`.
 
-## Integrasi Hermes
+## Adding Accounts
 
-### 1. Custom provider di `~/.hermes/config.yaml`
+### Option A: Direct Refresh Token Entry (Recommended)
 
-```yaml
-custom_providers:
-  - name: ag-proxy
-    base_url: http://localhost:20130/v1
-    key_env: AG_PROXY_API_KEY
-    models:
-      - gemini-3.6-flash-high
-      - gemini-3.6-flash-tiered
-      - gemini-3.1-pro-high
-      - claude-sonnet-4-6-thinking
-      - claude-opus-4-6-thinking
-```
+1. Obtain a Google OAuth `refresh_token` from your laptop or existing configuration.
+2. Open dashboard (`http://YOUR-SERVER-IP:20130`) → **➕ Add Account**.
+3. Enter **Email** & **Refresh Token** → click **Add**.
 
-### 2. API key di `~/.hermes/.env`
+Tokens refresh automatically background every ~5 minutes.
 
-```env
-AG_PROXY_API_KEY=*** AG_PROXY_API_KEY dari .env proxy>
-```
+### Option B: Google OAuth Web Login (`oauth_helper.py`)
 
-### 3. Pakai model
+When `OAUTH_*` credentials are configured in `.env`:
 
 ```bash
-hermes model ag2/gemini-3.6-flash-high
-```
-
-## Cara Tambah Akun
-
-### CARA A: Manual via Refresh Token (paling mudah)
-
-1. Ambil `refresh_token` dari database/log 9router atau OAuth flow di laptop.
-2. Buka dashboard `http://IP-VPS:20130` → **➕ Add Account**.
-3. Masukkan **Email** & **Refresh Token** → klik **Tambah**.
-
-Token akan di-refresh otomatis setiap ~1 jam.
-
-### CARA B: Google OAuth Login (via `oauth_helper.py`)
-
-Google menolak redirect URI non-loopback untuk OAuth client Antigravity, jadi
-login lewat browser hanya bisa dari **localhost** (SSH tunnel):
-
-```bash
-# Dari laptop kamu:
-ssh -L 8085:localhost:8085 user@ip-vps-kamu
-# Di VPS:
+# Run local loopback helper on VPS
 python3 oauth_helper.py
-# Buka di browser laptop: http://localhost:8085/login
-# Login Google → token otomatis masuk ke pool proxy
 ```
 
-Ulangi untuk setiap akun. Refresh token tidak pernah meninggalkan VPS.
+Forward port 8085 via SSH tunnel from your laptop:
 
-## Strategi Rotasi
+```bash
+ssh -L 8085:localhost:8085 user@your-vps-ip
+```
 
-| Strategi | Deskripsi |
+Open `http://localhost:8085/login` in your local browser to authenticate with Google. Refresh tokens add directly to the pool upon success.
+
+## Rotation Strategies
+
+| Strategy | Description |
 |---|---|
-| `round-robin` | Ganti akun setiap request secara bergiliran. |
-| `sticky` | Pakai 1 akun sampai kena 429/limit, lalu pindah ke akun lain (cooldown 5 menit). |
+| `round-robin` | Distributes requests sequentially across all active accounts. |
+| `sticky` | Locks to a single account until rate-limited (429), then switches to next account. |
 
-Ganti kapan saja via tombol **🔀 Ganti Mode** di dashboard.
+Switch modes anytime via the dashboard control panel.
 
-## Model yang Didukung
+## Supported Models
 
-| Nama Model | Upstream Antigravity |
+| Model Name | Upstream Target |
 |---|---|
 | `gemini-3.6-flash-high` | `gemini-3.6-flash-high` |
 | `gemini-3.6-flash-tiered` | `gemini-3.6-flash-tiered` |
@@ -157,8 +124,6 @@ Ganti kapan saja via tombol **🔀 Ganti Mode** di dashboard.
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
 | `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` |
 
-> Kuota Antigravity bersifat **shared pool per keluarga model** (pool Gemini & pool Claude), bukan per nama model.
+## License
 
-## Lisensi
-
-MIT License — bebas digunakan & dimodifikasi.
+MIT License

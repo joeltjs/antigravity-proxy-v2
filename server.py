@@ -50,7 +50,7 @@ HOST = CONFIG.get("host", "0.0.0.0")
 API_KEY = os.environ.get("AG_PROXY_API_KEY") or _ENV_FILE.get("AG_PROXY_API_KEY") or CONFIG.get("api_key", "")
 DASHBOARD_USER = os.environ.get("AG_DASHBOARD_USER") or _ENV_FILE.get("AG_DASHBOARD_USER") or CONFIG.get("dashboard_user", "admin")
 DASHBOARD_PASSWORD = os.environ.get("AG_DASHBOARD_PASSWORD") or _ENV_FILE.get("AG_DASHBOARD_PASSWORD") or CONFIG.get("dashboard_password", "")
-# OAuth (Google Cloud Console): env var > .env > config.json
+# OAuth (Google Cloud Console): env var > .env > config.json (Optional: for web OAuth login like 9router)
 OAUTH = dict(CONFIG.get("oauth", {}))
 OAUTH["client_id"] = os.environ.get("OAUTH_ACCESS_KEY") or _ENV_FILE.get("OAUTH_ACCESS_KEY") or OAUTH.get("client_id", "")
 OAUTH["client_secret"] = os.environ.get("OAUTH_SECRET_KEY") or _ENV_FILE.get("OAUTH_SECRET_KEY") or OAUTH.get("client_secret", "")
@@ -65,8 +65,8 @@ OAUTH_SCOPES = CONFIG.get("oauth_scopes",
     "https://www.googleapis.com/auth/userinfo.profile "
     "https://www.googleapis.com/auth/cclog "
     "https://www.googleapis.com/auth/experimentsandconfigs openid")
-# Redirect URI untuk Google OAuth: env var > .env > config > derive dari Host header.
-# Google mensyaratkan redirect_uri PERSIS sama dengan yang terdaftar di Cloud Console.
+# Redirect URI for Google OAuth: env var > .env > config > derive from Host header.
+# Google requires redirect_uri to match Cloud Console configuration exactly.
 OAUTH_REDIRECT_URI = (os.environ.get("OAUTH_REDIRECT_URI")
                       or _ENV_FILE.get("OAUTH_REDIRECT_URI")
                       or CONFIG.get("oauth_redirect_uri", ""))
@@ -483,9 +483,8 @@ def _save_accounts():
 # ─── Model Mapping ────────────────────────────────────────────────────────────
 
 MODEL_MAP = {
-    "gemini-3.7-flash-high": "gemini-3.7-flash-high",
-    "gemini-3.7-flash": "gemini-3.7-flash",
-    "gemini-3.6-flash-tiered": "gemini-3.6-flash-tiered",
+    "gemini-3.7-flash-high": "gemini-3.7-flash-tiered",
+    "gemini-3.7-flash-medium": "gemini-3.7-flash-tiered",
     "gemini-3.6-flash-high": "gemini-3.6-flash-high",
     "gemini-3.1-pro-high": "gemini-pro-agent",
     "claude-sonnet-4-6-thinking": "claude-sonnet-4-6",
@@ -524,6 +523,36 @@ def _sanitize_fn_name(name):
     if not re.match(r"^[a-zA-Z_]", s):
         s = "_" + s
     return s[:64]
+
+
+def _clean_schema_for_gemini(schema):
+    """Recursively clean JSON Schema for Gemini/Antigravity API:
+    Only allow fields supported by Google CloudCode Schema proto:
+    type, format, description, nullable, enum, properties, required, items.
+    Converts and strips all draft-04/07/2020 validation keys."""
+    if not isinstance(schema, dict):
+        return schema
+
+    ALLOWED_KEYS = {
+        "type", "format", "description", "nullable", "enum",
+        "properties", "required", "items"
+    }
+
+    cleaned = {}
+    for k, v in schema.items():
+        if k not in ALLOWED_KEYS:
+            continue
+        if k == "properties" and isinstance(v, dict):
+            cleaned[k] = {pk: _clean_schema_for_gemini(pv) for pk, pv in v.items()}
+        elif k == "items" and isinstance(v, dict):
+            cleaned[k] = _clean_schema_for_gemini(v)
+        elif isinstance(v, dict):
+            cleaned[k] = _clean_schema_for_gemini(v)
+        elif isinstance(v, list):
+            cleaned[k] = [_clean_schema_for_gemini(item) if isinstance(item, dict) else item for item in v]
+        else:
+            cleaned[k] = v
+    return cleaned
 
 
 # Antigravity requires a thought_signature on functionCall parts for tool use.
@@ -669,10 +698,12 @@ def openai_to_antigravity(body):
     for tool in body.get("tools", []):
         if tool.get("type") == "function":
             fn = tool.get("function", {})
+            raw_params = fn.get("parameters", {"type": "object", "properties": {}})
+            cleaned_params = _clean_schema_for_gemini(raw_params)
             tools.append({"functionDeclarations": [{
                 "name": _sanitize_fn_name(fn.get("name", "")),
                 "description": fn.get("description", ""),
-                "parameters": fn.get("parameters", {"type": "object", "properties": {}})}]})
+                "parameters": cleaned_params}]})
     ag_request = {"model": ag_model, "userAgent": "antigravity",
         "request": {"contents": contents, "generationConfig": gen_config}}
     if system_instruction: ag_request["request"]["systemInstruction"] = system_instruction
@@ -710,7 +741,10 @@ def antigravity_to_openai(ag_response, model_name, request_id):
         "usage": {"prompt_tokens": usage.get("promptTokenCount", 0),
             "completion_tokens": usage.get("candidatesTokenCount", 0),
             "total_tokens": usage.get("totalTokenCount", 0),
-            "reasoning_tokens": usage.get("thoughtsTokenCount", 0)}}
+            "reasoning_tokens": usage.get("thoughtsTokenCount", 0),
+            "prompt_tokens_details": {
+                "cached_tokens": usage.get("cachedContentTokenCount", 0)
+            }}}
 
 
 def antigravity_chunk_to_openai(chunk_data, model_name, request_id, state):
@@ -979,7 +1013,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._security_headers()
             # Content-Security-Policy: block inline injection & external scripts
             self.send_header("Content-Security-Policy",
-                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'")
+                "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'")
             # Fresh per-session token (httpOnly — JS can't read it)
             self.send_header("Set-Cookie", f"ag_session={_issue_session_token()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400")
             self.end_headers()
@@ -1130,6 +1164,34 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 return
             if remove_account_from_pool(email):
                 self._send_json(200, {"ok": True, "removed": email})
+            else:
+                self._send_json(404, {"error": {"message": "Not found"}})
+            return
+
+        if self.path == "/v1/accounts/toggle":
+            body_raw, err = self._read_body(64 * 1024)
+            if err:
+                self._send_json(413, {"error": {"message": err}})
+                return
+            try:
+                req = json.loads(body_raw)
+                email = req.get("email", "")
+            except Exception:
+                self._send_json(400, {"error": {"message": "Invalid JSON"}})
+                return
+            target_acc = None
+            for acc in ACCOUNT_STATES:
+                if acc.email == email:
+                    acc.disabled = not acc.disabled
+                    target_acc = acc
+                    break
+            if target_acc:
+                for c_acc in CONFIG.get("accounts", []):
+                    if c_acc.get("email") == email:
+                        c_acc["disabled"] = target_acc.disabled
+                        _save_accounts()
+                        break
+                self._send_json(200, {"ok": True, "email": email, "disabled": target_acc.disabled})
             else:
                 self._send_json(404, {"error": {"message": "Not found"}})
             return
@@ -1299,12 +1361,22 @@ class ProxyHandler(BaseHTTPRequestHandler):
                         break
             final = {"id": request_id, "object": "chat.completion.chunk", "created": int(time.time()),
                 "model": model, "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}
+            um = state.get("usage", {})
+            if um:
+                final["usage"] = {
+                    "prompt_tokens": um.get("promptTokenCount", 0),
+                    "completion_tokens": um.get("candidatesTokenCount", 0),
+                    "total_tokens": um.get("totalTokenCount", 0),
+                    "reasoning_tokens": um.get("thoughtsTokenCount", 0),
+                    "prompt_tokens_details": {
+                        "cached_tokens": um.get("cachedContentTokenCount", 0)
+                    }
+                }
             self.wfile.write(f"data: {json.dumps(final)}\n\n".encode())
             self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
             # Usage arrives in the final chunk (usageMetadata, no candidates)
             try:
-                um = state.get("usage", {})
                 record_usage(model, um.get("promptTokenCount", 0), um.get("candidatesTokenCount", 0),
                              um.get("cachedContentTokenCount", 0), "ok", (time.time() - started) * 1000)
             except Exception:
@@ -1339,6 +1411,8 @@ def main():
     print("=" * 60)
     print("\n[INIT] Pre-refreshing tokens...")
     for acc in ACCOUNT_STATES:
+        if acc.disabled:
+            print(f"  ⏸️ {acc.email}: disabled (token still refreshed)")
         try:
             acc.get_token()
             acc.fetch_quota()

@@ -8,7 +8,7 @@
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background-color:#0b0c10;background-image:linear-gradient(to right,rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:24px 24px;background-attachment:fixed;color:#e2e8f0;min-height:100vh;padding:24px 16px}
-  .wrap{max-width:1040px;margin:0 auto}
+  .wrap{max-width:1200px;margin:0 auto}
   .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;background:rgba(18,20,29,0.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);padding:16px 20px;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
   .header h1{font-size:22px;display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-0.4px;background:linear-gradient(135deg,#ffffff 40%,#60a5fa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(96,165,250,0.25)}
   .header h1 span.header-icon{-webkit-text-fill-color:initial}
@@ -26,16 +26,19 @@
   .card-title{font-size:15px;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;font-weight:800}
   .card-title .icon{display:inline-block;margin-right:6px;-webkit-text-fill-color:initial;font-size:16px}
   .card-title span.title-txt{background:linear-gradient(135deg,#ffffff 50%,#38bdf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-  .acc-card{background:rgba(12,14,22,0.8);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;margin-bottom:14px}
+  .accounts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px}
+  .acc-card{background:rgba(12,14,22,0.8);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;transition:all .2s ease}
+  .acc-card.disabled{opacity:0.45;filter:blur(0.6px);background:rgba(8,9,14,0.6);border-color:rgba(255,255,255,0.03)}
+  .acc-card.disabled:hover{opacity:0.75;filter:none}
   .acc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-  .acc-email{font-size:14px;font-weight:600;font-family:'SF Mono',Consolas,monospace;color:#f1f5f9}
+  .acc-email{font-size:14px;font-weight:600;font-family:'SF Mono',Consolas,monospace;color:#f1f5f9;word-break:break-all}
   .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
   .b-ok{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.25)}
   .b-err{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.25)}
   .b-off{background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1)}
-  .acc-stats{display:flex;gap:16px;font-size:12px;color:#94a3b8;margin-bottom:12px}
+  .acc-stats{display:flex;gap:12px;font-size:12px;color:#94a3b8;margin-bottom:12px;flex-wrap:wrap}
   .acc-stats span b{color:#f1f5f9}
-  .quota-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .quota-grid{display:flex;flex-direction:column;gap:8px}
   .quota-item{background:rgba(8,10,16,0.7);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px}
   .quota-item .qname{font-size:12px;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;color:#e2e8f0}
   .quota-item .qbar{height:7px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
@@ -59,11 +62,13 @@
   .num-in{color:#ff6b4a}
   .num-cached{color:#3b82f6}
   .num-out{color:#22c55e}
-  /* Clean text-only vibrant colored tags (bold & enlarged) */
+  /* Dynamic pool-tag color matching quota remaining bar status */
+  .tag-q-high{color:#4ade80;text-shadow:0 0 10px rgba(74,222,128,0.4)}
+  .tag-q-mid{color:#fbbf24;text-shadow:0 0 10px rgba(251,191,36,0.4)}
+  .tag-q-low{color:#f87171;text-shadow:0 0 10px rgba(248,113,113,0.4)}
   .pool-tag{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.3px}
   .pool-gemini{color:#00b0ff;text-shadow:0 0 10px rgba(0,176,255,0.4)}
   .pool-third{color:#ff2d55;text-shadow:0 0 10px rgba(255,45,85,0.4)}
-  .pool-internal{color:#00e676;text-shadow:0 0 10px rgba(0,230,118,0.4)}
   .u-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'SF Mono',Consolas,monospace}
   .u-table th{text-align:left;color:#94a3b8;font-weight:600;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
   .u-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:#cbd5e1}
@@ -87,10 +92,8 @@
   .modal .hint{font-size:11px;color:#52525b;margin-top:8px;line-height:1.5}
   .toast{position:fixed;bottom:20px;right:20px;background:#052e16;border:1px solid #4ade80;color:#4ade80;padding:10px 16px;border-radius:8px;font-size:13px;animation:slideUp .3s;z-index:200}
   @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-  @keyframes pulse-glow{0%,100%{opacity:1;box-shadow:0 0 8px 2px rgba(74,222,128,.6)}50%{opacity:.4;box-shadow:0 0 2px 0 rgba(74,222,128,.2)}}
-  @keyframes pulse-amber{0%,100%{opacity:1;box-shadow:0 0 8px 2px rgba(251,191,36,.5)}50%{opacity:.4;box-shadow:0 0 2px 0 rgba(251,191,36,.15)}}
-  .dot-streaming{background:#4ade80 !important;animation:pulse-glow 1.2s ease-in-out infinite}
-  .dot-connecting{background:#fbbf24 !important;animation:pulse-amber 1.6s ease-in-out infinite}
+  @keyframes pulse-glow{0%,100%{opacity:1;box-shadow:0 0 10px 3px rgba(74,222,128,.7);transform:scale(1)}50%{opacity:.5;box-shadow:0 0 3px 0 rgba(74,222,128,.2);transform:scale(0.92)}}
+  .dot-active{background:#4ade80 !important;animation:pulse-glow 1s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -251,21 +254,22 @@ function quotaColor(frac) {
   if (frac > 0.2) return 'q-mid';
   return 'q-low';
 }
+function quotaTagClass(frac) {
+  if (frac > 0.5) return 'tag-q-high';
+  if (frac > 0.2) return 'tag-q-mid';
+  return 'tag-q-low';
+}
 function familyOf(id) {
   if (String(id).startsWith('gemini')) return 'gemini';
-  // Claude & gpt-oss share SATU pool third-party (fraction & reset identik)
   if (String(id).startsWith('claude')) return 'third';
   if (String(id).startsWith('gpt-oss')) return 'third';
-  // chat_*/tab_* = model internal Google (eksperimen chat internal & tab-completion
-  // di IDE). Selalu 100%, tanpa reset time, maxOutputTokens 0/4096 — pool terpisah.
-  return 'internal';
+  return null; // Omit Google Internal
 }
-const FAMILY_LABEL_HTML = {
-  gemini: '<span class="pool-tag pool-gemini">Gemini Pool</span>',
-  third: '<span class="pool-tag pool-third">Third-Party Pool</span>',
-  internal: '<span class="pool-tag pool-internal">Google Internal</span>'
+const FAMILY_NAMES = {
+  gemini: 'Gemini Pool',
+  third: 'Third-Party Pool'
 };
-const FAMILY_ORDER = ['gemini', 'third', 'internal'];
+const FAMILY_ORDER = ['gemini', 'third'];
 // Simpan quota mentah per akun untuk modal "show all"
 window._quotaRaw = [];
 // Kelompokkan quota per pool: fraction & resetTime diambil dari pool (semua model dalam pool share angka yang sama)
@@ -273,6 +277,7 @@ function groupQuota(quota) {
   const groups = {};
   Object.entries(quota||{}).forEach(([id, q]) => {
     const fam = familyOf(id);
+    if (!fam) return; // Skip internal / unmapped
     if (!groups[fam]) groups[fam] = { frac: 1, resetTime: null, models: [] };
     groups[fam].frac = Math.min(groups[fam].frac, Number(q.remainingFraction)||0);
     groups[fam].resetTime = q.resetTime || groups[fam].resetTime;
@@ -286,12 +291,14 @@ function showQuotaDetail(idx) {
   const byFam = {};
   Object.entries(q).forEach(([id, v]) => {
     const fam = familyOf(id);
+    if (!fam) return;
     if (!byFam[fam]) byFam[fam] = [];
     byFam[fam].push([id, v]);
   });
   let rows = '';
   FAMILY_ORDER.filter(f => byFam[f]).forEach(fam => {
-    rows += `<tr><td colspan="2" style="padding:10px 10px 6px;border-bottom:1px solid #1e1e26">${FAMILY_LABEL_HTML[fam]||esc(fam)}</td></tr>`;
+    const label = FAMILY_NAMES[fam] || fam;
+    rows += `<tr><td colspan="2" style="padding:10px 10px 6px;border-bottom:1px solid #1e1e26"><span class="pool-tag pool-${fam}">${esc(label)}</span></td></tr>`;
     byFam[fam].sort((a,b) => a[0].localeCompare(b[0])).forEach(([id, v]) => {
       rows += `<tr><td style="padding:6px 10px;border-bottom:1px solid #1e1e26">${esc(v.displayName||id)}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #1e1e26;color:#52525b;font-size:11px;text-align:right">${esc(fmtTime(v.resetTime))}</td></tr>`;
@@ -324,7 +331,7 @@ async function load() {
     let totalReq=0, totalErr=0, active=0;
     const html = accs.length === 0
       ? '<div class="empty">No accounts added yet. Click "Add Account" to login via Google OAuth.</div>'
-      : accs.map((a, idx) => {
+      : '<div class="accounts-grid">' + accs.map((a, idx) => {
           totalReq += a.requests; totalErr += a.errors;
           if (!a.disabled && a.has_token) active++;
           const badge = a.disabled ? '<span class="badge b-off">DISABLED</span>'
@@ -337,27 +344,34 @@ async function load() {
             ? '<div class="quota-grid">' + FAMILY_ORDER.filter(f => groups[f]).map(fam => {
                 const g = groups[fam];
                 const pct = Math.max(0, Math.min(100, g.frac*100)).toFixed(1);
+                const tagClass = quotaTagClass(g.frac);
+                const famName = FAMILY_NAMES[fam] || fam;
                 return `<div class="quota-item">
-                  <div class="qname"><span>${FAMILY_LABEL_HTML[fam]||esc(fam)}</span><span>${pct}%</span></div>
+                  <div class="qname"><span class="pool-tag ${tagClass}">${esc(famName)}</span><span class="${tagClass}" style="font-weight:700">${pct}%</span></div>
                   <div class="qbar"><div class="qfill ${quotaColor(g.frac)}" style="width:${pct}%"></div></div>
                   <div class="qinfo">reset: ${esc(fmtTime(g.resetTime))}</div>
                 </div>`;
               }).join('') + '</div>'
             : '<div style="color:#52525b;font-size:12px">Quota not fetched yet</div>';
-          return `<div class="acc-card">
-            <div class="acc-header">
-              <span class="acc-email">${esc(a.email)}</span>
-              <div style="display:flex;gap:6px;align-items:center">${badge}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Delete</button></div>
-            </div>
-            <div class="acc-stats">
-              <span>⏱ Token TTL: <b>${expMin}</b></span>
-              <span>📊 Requests: <b>${a.requests}</b></span>
-              <span>⚠️ Errors: <b>${a.errors}</b></span>
-              ${a.last_error ? `<span style="color:#f87171">❌ ${esc(String(a.last_error).substring(0,50))}</span>` : ''}
+          const toggleBtn = a.disabled
+            ? `<button class="btn btn-ghost btn-sm" onclick="toggleAcc(${idx})">Enable</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="toggleAcc(${idx})">Disable</button>`;
+          return `<div class="acc-card ${a.disabled ? 'disabled' : ''}">
+            <div>
+              <div class="acc-header">
+                <span class="acc-email">${esc(a.email)}</span>
+                <div style="display:flex;gap:6px;align-items:center">${badge}${toggleBtn}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Delete</button></div>
+              </div>
+              <div class="acc-stats">
+                <span>⏱ TTL: <b>${expMin}</b></span>
+                <span>📊 Req: <b>${a.requests}</b></span>
+                <span>⚠️ Err: <b>${a.errors}</b></span>
+                ${a.last_error ? `<span style="color:#f87171">❌ ${esc(String(a.last_error).substring(0,40))}</span>` : ''}
+              </div>
             </div>
             ${quotaHtml}
           </div>`;
-        }).join('');
+        }).join('') + '</div>';
     document.getElementById('accounts').innerHTML = html;
     // Simpan index→email map untuk hapus akun (hindari injection via email di onclick)
     window._accEmails = accs.map(a => a.email);
@@ -397,6 +411,12 @@ async function removeAcc(idx) {
   if (!email) { showToast('❌ Account not found', true); return; }
   if (!confirm('Delete account '+email+'?')) return;
   await api('/v1/accounts/remove', {method:'POST', body: JSON.stringify({email})});
+  load();
+}
+async function toggleAcc(idx) {
+  const email = window._accEmails && window._accEmails[idx];
+  if (!email) { showToast('❌ Account not found', true); return; }
+  await api('/v1/accounts/toggle', {method:'POST', body: JSON.stringify({email})});
   load();
 }
 function showAddModal() {
@@ -560,14 +580,14 @@ async function loadActive() {
     const extra = document.getElementById('active-extra');
     if (d.active && d.active.length > 0) {
       const a = d.active[0];
-      const streaming = a.status === 'streaming';
-      dot.className = streaming ? 'dot-streaming' : 'dot-connecting';
-      bar.style.borderColor = streaming ? '#4ade80' : '#fbbf24';
+      dot.className = 'dot-active';
+      bar.style.borderColor = '#4ade80';
       modelEl.textContent = a.model;
-      modelEl.style.color = streaming ? '#4ade80' : '#fbbf24';
+      modelEl.style.color = '#4ade80';
       detailEl.textContent = 'Account in use: ' + a.account;
-      detailEl.style.color = streaming ? '#4ade80' : '#fbbf24';
-      statusEl.textContent = (streaming ? '⚡ Consuming tokens' : '🔌 Connecting') + ' — ' + a.elapsed + 's';
+      detailEl.style.color = '#4ade80';
+      statusEl.textContent = '⚡ Active — ' + a.elapsed + 's';
+      statusEl.style.color = '#4ade80';
       // Detail list kalo ada multiple request
       if (d.active.length > 1) {
         extra.style.display = 'block';

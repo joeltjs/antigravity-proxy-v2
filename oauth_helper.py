@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 """
-OAuth Helper — tambah akun Google AI Pro ke Antigravity Proxy.
+OAuth Helper — Adds Google AI Pro accounts to Antigravity Proxy.
 
-CARA KERJA (loopback OAuth — satu-satunya cara yang diterima Google
-untuk client Antigravity):
-  1. Jalankan script ini DI VPS.
-  2. Dari laptop, buka SSH tunnel:
-        ssh -L 8085:localhost:8085 <user>@<ip-vps-kamu>
-  3. Buka http://localhost:8085/login di browser laptop.
-  4. Login pakai akun Google AI Pro → consent → selesai.
-  5. Ulangi langkah 3-4 untuk tiap akun.
+HOW IT WORKS (loopback OAuth — the only flow accepted by Google for Antigravity clients):
+  1. Run this script ON THE VPS.
+  2. Open an SSH tunnel from your laptop:
+        ssh -L 8085:localhost:8085 <user>@<your-vps-ip>
+  3. Open http://localhost:8085/login in your laptop's browser.
+  4. Authenticate with your Google AI Pro account → grant consent → complete.
+  5. Repeat steps 3-4 for each account.
 
-KEAMANAN:
-  - Server hanya bind ke 127.0.0.1 (tidak terbuka ke publik).
-  - Refresh token TIDAK pernah mampir di laptop / jaringan publik —
-    callback ditangkap di VPS, langsung di-POST ke proxy via localhost.
-  - Credential (client id/secret + API key) dibaca dari .env proxy,
-    tidak pernah ditampilkan.
-  - Ada state parameter anti-CSRF, expire 10 menit.
+SECURITY:
+  - Server binds strictly to 127.0.0.1 (not exposed publicly).
+  - Refresh tokens NEVER pass through the laptop or public network;
+    callbacks are captured on the VPS and POSTed directly to the proxy via localhost.
+  - Credentials (client_id, client_secret, API key) are loaded from .env and never displayed.
+  - Includes an anti-CSRF state parameter with a 10-minute expiry window.
 """
 
 import html
@@ -36,13 +34,13 @@ PROXY_DIR = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("OAUTH_HELPER_PORT", "8085"))
 PROXY_URL = "http://127.0.0.1:20130"
 
-# ── Baca credential dari .env (tanpa pernah menampilkan nilainya) ────────────
+# ── Load credentials from .env ────────────────────────────────────────────────
 
 def _load_env():
     env = {}
     path = os.path.join(PROXY_DIR, ".env")
     if not os.path.exists(path):
-        print(f"❌ Tidak ada {path}")
+        print(f"❌ Missing {path}")
         sys.exit(1)
     with open(path) as f:
         for line in f:
@@ -64,40 +62,42 @@ SCOPES = ("https://www.googleapis.com/auth/cloud-platform "
           "https://www.googleapis.com/auth/experimentsandconfigs openid")
 
 if not CLIENT_ID or not CLIENT_SECRET:
-    print("❌ OAUTH_ACCESS_KEY / OAUTH_SECRET_KEY tidak ada di .env")
+    print("❌ OAUTH_ACCESS_KEY / OAUTH_SECRET_KEY missing in .env")
     sys.exit(1)
 if not API_KEY:
-    print("❌ AG_PROXY_API_KEY tidak ada di .env")
+    print("❌ AG_PROXY_API_KEY missing in .env")
     sys.exit(1)
 
 _states = {}  # state -> timestamp
 _lock = threading.Lock()
 
-PAGE_OK = """<!DOCTYPE html><html><head><meta charset="utf-8"><title>Berhasil</title></head>
+PAGE_OK = """<!DOCTYPE html><html><head><meta charset="utf-8"><title>Success</title></head>
 <body style="font-family:system-ui,sans-serif;background:#0f1117;color:#e4e4e7;
 display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
 <div style="text-align:center;background:#16161e;padding:40px 56px;border-radius:16px;border:1px solid #1e1e26">
 <h1 style="color:#4ade80;margin:0 0 12px">✅</h1>
-<h2 style="margin:0 0 8px">Akun berhasil ditambahkan!</h2>
+<h2 style="margin:0 0 8px">Account added successfully!</h2>
 <p style="color:#a1a1aa;margin:4px 0">{email}</p>
-<p style="color:#a1a1aa;font-size:14px">Total akun di pool: {total}</p>
-<p style="margin-top:24px"><a href="/login" style="color:#60a5fa">➕ Tambah akun lagi</a></p>
-<p style="color:#52525b;font-size:12px">Tab ini boleh ditutup.</p>
+<p style="color:#a1a1aa;font-size:14px">Total accounts in pool: {total}</p>
+<p style="margin-top:24px"><a href="/login" style="color:#60a5fa">➕ Add another account</a></p>
+<p style="color:#52525b;font-size:12px">You may close this tab.</p>
 </div></body></html>"""
 
-PAGE_ERR = """<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gagal</title></head>
+PAGE_ERR = """<!DOCTYPE html><html><head><meta charset="utf-8"><title>Failed</title></head>
 <body style="font-family:system-ui,sans-serif;background:#0f1117;color:#e4e4e7;
 display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
 <div style="text-align:center;background:#16161e;padding:40px 56px;border-radius:16px;border:1px solid #450a0a">
 <h1 style="color:#f87171;margin:0 0 12px">❌</h1>
 <h2 style="margin:0 0 8px">{title}</h2>
 <p style="color:#a1a1aa">{detail}</p>
-<p style="margin-top:24px"><a href="/login" style="color:#60a5fa">🔄 Coba lagi</a></p>
+<p style="margin-top:24px"><a href="/login" style="color:#60a5fa">🔄 Try again</a></p>
 </div></body></html>"""
 
 
 def _redirect_uri():
-    return f"http://localhost:{PORT}/callback"
+    return (os.environ.get("OAUTH_REDIRECT_URI")
+            or _ENV.get("OAUTH_REDIRECT_URI")
+            or f"http://localhost:{PORT}/callback")
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -113,7 +113,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
 
         if parsed.path in ("/", "/login"):
-            # Bersihkan state kedaluwarsa (>10 menit)
+            # Purge expired states (>10 min)
             state = secrets.token_urlsafe(24)
             with _lock:
                 now = time.time()
@@ -141,8 +141,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             error = qs.get("error", [None])[0]
             if error:
                 self._html(400, PAGE_ERR.format(
-                    title="Google menolak login",
-                    detail=f"Error dari Google: {html.escape(error)}. Coba lagi."))
+                    title="Google rejected login",
+                    detail=f"Google error: {html.escape(error)}. Try again."))
                 return
             code = qs.get("code", [None])[0]
             state = qs.get("state", [None])[0]
@@ -150,11 +150,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 valid = _states.pop(state, None) if state else None
             if not code or valid is None:
                 self._html(400, PAGE_ERR.format(
-                    title="State tidak valid",
-                    detail="Session OAuth kedaluwarsa atau tidak dikenal. Klik 'Coba lagi'."))
+                    title="Invalid state",
+                    detail="OAuth session expired or unrecognized. Click 'Try again'."))
                 return
 
-            # Tukar authorization code → refresh token
+            # Exchange authorization code -> refresh token
             data = urllib.parse.urlencode({
                 "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET,
@@ -170,18 +170,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     tokens = json.loads(resp.read().decode())
             except Exception as e:
                 self._html(500, PAGE_ERR.format(
-                    title="Token exchange gagal",
-                    detail=f"Google menolak code-nya: {e}"))
+                    title="Token exchange failed",
+                    detail=f"Google rejected code: {e}"))
                 return
 
             refresh_token = tokens.get("refresh_token")
             if not refresh_token:
                 self._html(400, PAGE_ERR.format(
-                    title="Tidak dapat refresh token",
-                    detail="Google tidak memberikan refresh_token. Coba lagi dan pastikan pilih akun yang benar."))
+                    title="Could not obtain refresh token",
+                    detail="Google did not issue a refresh_token. Ensure you consent and select the correct account."))
                 return
 
-            # Ambil email akun
+            # Fetch account email
             email = "unknown"
             try:
                 ureq = urllib.request.Request(
@@ -192,7 +192,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-            # POST langsung ke proxy via localhost — token tidak pernah keluar VPS
+            # POST directly to proxy via localhost — token stays on VPS
             try:
                 add_body = json.dumps({
                     "email": email, "refresh_token": refresh_token}).encode()
@@ -209,22 +209,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except Exception:
                     msg = body_txt[:120]
                 self._html(500, PAGE_ERR.format(
-                    title="Proxy menolak akun", detail=msg))
+                    title="Proxy rejected account", detail=msg))
                 return
             except Exception as e:
                 self._html(500, PAGE_ERR.format(
-                    title="Gagal menghubungi proxy",
-                    detail=f"Proxy tidak merespons: {e}. Pastikan ag-proxy jalan."))
+                    title="Failed connecting to proxy",
+                    detail=f"Proxy unresponsive: {e}. Ensure ag-proxy is running."))
                 return
 
-            print(f"[OK] Ditambahkan: {email} (total akun: {total})")
+            print(f"[OK] Added: {email} (total pool: {total})")
             self._html(200, PAGE_OK.format(email=email, total=total))
             return
 
-        self._html(404, PAGE_ERR.format(title="404", detail="Halaman tidak ditemukan."))
+        self._html(404, PAGE_ERR.format(title="404", detail="Page not found."))
 
     def log_message(self, fmt, *args):
-        # Log akses tanpa membocorkan query string (ada code/state di sana)
+        # Log request without leaking code/state query params
         print(f"[helper] {self.address_string()} {self.command} {self.path.split('?')[0]}")
 
 
@@ -233,14 +233,14 @@ def main():
     print("=" * 62)
     print("  OAuth Helper — Antigravity Proxy")
     print("=" * 62)
-    print(f"  Server jalan di: http://localhost:{PORT}")
+    print(f"  Server listening on: http://localhost:{PORT}")
     print()
-    print("  DARI LAPTOP, pastikan SSH tunnel aktif:")
-    print("    ssh -L 8085:localhost:8085 <user>@<ip-vps-kamu>")
+    print("  FROM LAPTOP, verify active SSH tunnel:")
+    print("    ssh -L 8085:localhost:8085 <user>@<your-vps-ip>")
     print()
-    print(f"  Lalu buka di browser: http://localhost:{PORT}/login")
-    print("  Login pakai akun Google AI Pro → consent → selesai.")
-    print("  Ulangi untuk tiap akun. Ctrl+C untuk berhenti.")
+    print(f"  Then open in browser: http://localhost:{PORT}/login")
+    print("  Authenticate with Google AI Pro → grant consent → complete.")
+    print("  Repeat for additional accounts. Ctrl+C to terminate.")
     print("=" * 62)
     try:
         server.serve_forever()
