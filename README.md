@@ -118,6 +118,7 @@ Switch modes anytime via the dashboard control panel.
 
 | Model Name | Upstream Target |
 |---|---|
+| `gemini-3.7-flash-high` | `gemini-3.7-flash-high` |
 | `gemini-3.6-flash-high` | `gemini-3.6-flash-high` |
 | `gemini-3.6-flash-tiered` | `gemini-3.6-flash-tiered` |
 | `gemini-3.1-pro-high` | `gemini-pro-agent` |
