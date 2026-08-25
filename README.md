@@ -92,28 +92,31 @@ Verify service status:
 sudo systemctl status ag-proxy
 ```
 
-## Adding Accounts
+## How to Get Refresh Tokens & Add Accounts
 
-### Option 1: Fast Migration from 9router (Recommended if using 9router)
+Google Antigravity/CloudCode uses official developer OAuth scopes. You do **not** need to enable private Google APIs in your GCP Console. Use any of the verified methods below:
 
-If you already logged into Google AI Pro accounts via 9router:
+### Method 1: Fast Migration from 9router (Recommended if you use 9router)
 
-1. Open 9router database (`data.sqlite`).
+If you already authenticated Google accounts in 9router:
+
+1. Open 9router SQLite database (`data.sqlite`).
 2. Query `providerConnections` where `provider = 'antigravity'`.
-3. Extract `email` and `refreshToken` and paste into `config.json` under `accounts`.
-4. Alternatively, instruct an AI agent to copy tokens directly from the database into `config.json`.
+3. Extract `email` and `refreshToken` and paste directly into `config.json` under `accounts`.
+4. Alternatively, use an AI agent or migration script to automate copying.
 
-### Option 2: Dashboard UI Entry
+### Method 2: Official Google OAuth Consent (Standard Flow)
 
-1. Open dashboard (`http://localhost:20130` or `http://YOUR-SERVER-IP:20130`).
-2. Click **Add Account**.
-3. Enter **Email** and **Refresh Token** then click **Add**.
+1. Obtain a valid Google OAuth `refresh_token` using official Antigravity/CloudCode client credentials.
+2. Open your dashboard (`http://localhost:20130` or `http://YOUR-SERVER-IP:20130`).
+3. Click **Add Account**.
+4. Enter **Email** and **Refresh Token**, then click **Add**.
 
 Tokens refresh automatically in the background every 5 minutes.
 
-### Option 3: Google OAuth Web Login (`oauth_helper.py`)
+### Method 3: Web-Based OAuth Helper (`oauth_helper.py`)
 
-When `OAUTH_*` credentials are configured in `.env`:
+If you have configured custom Google OAuth credentials in `.env` (`OAUTH_ACCESS_KEY`, `OAUTH_SECRET_KEY`, `OAUTH_REDIRECT_URI`):
 
 ```bash
 python3 oauth_helper.py
