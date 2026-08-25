@@ -1,27 +1,31 @@
-# 🚀 Antigravity Multi-Account Proxy
+# Antigravity Multi-Account Proxy
 
-Lightweight Python proxy (100% standard library, zero external dependencies) for **Google AI Pro / Antigravity**.
+Lightweight Python proxy (100% standard library, zero external dependencies) for Google AI Pro and Antigravity.
+
+Designed for local development machines and remote server environments.
 
 ## Core Features
 
-- 🔄 **Multi-Account Round-Robin & Sticky Failover** — Automatic rotation across Google AI Pro accounts.
-- ⚡ **Auto-Failover on Rate Limits (429)** — Account hit 429 → 5-minute cooldown → Request rerouted to next available account.
-- 🧠 **OpenAI Compatible API** — `/v1/chat/completions` endpoint supporting Hermes, OpenWebUI, Cursor, LangChain, etc.
-- 🛡️ **Zero External Dependencies** — Built exclusively with Python 3 standard library (`http.server` & `urllib`).
-- 📊 **Dashboard & Usage Monitor** — Per-model quota bars, active request state, real-time log stream, and token usage analytics.
-- 🔧 **Tool Use Conversion** — Converts OpenAI tool calls to Antigravity `functionCall` format with `thoughtSignature` support.
+- Multi-Account Round-Robin and Sticky Failover: Automatic rotation across Google AI Pro accounts.
+- Auto-Failover on Rate Limits (429): If an account hits 429, a 5-minute cooldown is applied and requests reroute to the next available account.
+- OpenAI Compatible API: `/v1/chat/completions` endpoint supporting Hermes, OpenWebUI, Cursor, Cline, Kilo, LangChain, etc.
+- Zero External Dependencies: Built exclusively with Python 3 standard library (`http.server` and `urllib`).
+- Dashboard and Usage Monitor: Per-model quota bars, active request indicators, real-time log stream, and token usage analytics.
+- Tool Use Conversion: Converts OpenAI tool calls to Antigravity `functionCall` format with `thoughtSignature` support.
 
 ## Security Controls
 
-- 🔑 **Secrets Isolation** — API keys, passwords, and OAuth credentials load from `.env` (git-ignored). `.env.example` provided as template.
-- 🚫 **XSS & Header Protections** — Escaped dynamic strings; `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff` headers.
-- 🔒 **Brute-Force Protection** — 5 consecutive auth failures trigger a 15-minute IP lockout across API and dashboard endpoints.
-- ⏱️ **Constant-Time Comparison** — Secret comparison uses `secrets.compare_digest` to prevent timing attacks.
-- 🍪 **Secure Session Cookies** — `HttpOnly` and `SameSite=Strict` flags applied to dashboard session cookies.
-- 📏 **Request Payload Limits** — 25 MB cap for chat completions, 64 KB cap for administrative endpoints.
-- 🧹 **Input Sanitization** — Account emails validated against HTML/control characters to prevent injection attacks.
+- Secrets Isolation: API keys, passwords, and OAuth credentials load from `.env` (git-ignored). `.env.example` provided as template.
+- XSS and Header Protections: Escaped dynamic strings, `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`.
+- Brute-Force Protection: 5 consecutive auth failures trigger a 15-minute IP lockout across API and dashboard endpoints.
+- Constant-Time Comparison: Secret comparison uses `secrets.compare_digest` to prevent timing attacks.
+- Secure Session Cookies: `HttpOnly` and `SameSite=Strict` flags applied to dashboard session cookies.
+- Request Payload Limits: 25 MB cap for chat completions, 64 KB cap for administrative endpoints.
+- Input Sanitization: Account emails validated against HTML and control characters to prevent injection attacks.
 
 ## Setup Instructions
+
+Works on local environments (macOS, Linux, WSL, Windows) and remote VPS setups.
 
 ### 1. Clone Repository
 
@@ -50,9 +54,11 @@ Edit `config.json`:
 }
 ```
 
-The `accounts` array populates automatically when adding accounts via dashboard or API.
+Host configuration:
+- Use `"host": "0.0.0.0"` if running on a VPS or container to allow external or subdomain access.
+- Use `"host": "127.0.0.1"` if running exclusively on your local machine.
 
-Edit `.env` and set your credentials (generate API key with `openssl rand -hex 16`):
+Edit `.env` and set your credentials:
 
 ```env
 AG_PROXY_API_KEY=your_generated_api_key
@@ -60,9 +66,19 @@ AG_DASHBOARD_USER=admin
 AG_DASHBOARD_PASSWORD=your_secure_password
 ```
 
-> **Optional OAuth Setup:** If you want web-based Google OAuth authentication (similar to 9router), fill in `OAUTH_ACCESS_KEY`, `OAUTH_SECRET_KEY`, and `OAUTH_REDIRECT_URI` in `.env`. If left empty, manual refresh token addition remains fully functional.
+Generate an API key with `openssl rand -hex 16`.
 
-### 3. Deploy Systemd Service
+### 3. Run the Proxy
+
+**Option A: Local Development / Manual Execution**
+
+```bash
+python3 server.py
+```
+
+Access the dashboard at `http://localhost:20130` (or `http://YOUR-SERVER-IP:20130` if on remote host).
+
+**Option B: Systemd Service (Linux / VPS)**
 
 ```bash
 sudo cp ag-proxy.service /etc/systemd/system/
@@ -76,34 +92,40 @@ Verify service status:
 sudo systemctl status ag-proxy
 ```
 
-Access dashboard at `http://YOUR-SERVER-IP:20130` using the Basic Auth credentials set in `.env`.
-
 ## Adding Accounts
 
-### Option A: Direct Refresh Token Entry (Recommended)
+### Option 1: Fast Migration from 9router (Recommended if using 9router)
 
-1. Obtain a Google OAuth `refresh_token` from your laptop or existing configuration.
-2. Open dashboard (`http://YOUR-SERVER-IP:20130`) → **➕ Add Account**.
-3. Enter **Email** & **Refresh Token** → click **Add**.
+If you already logged into Google AI Pro accounts via 9router:
 
-Tokens refresh automatically background every ~5 minutes.
+1. Open 9router database (`data.sqlite`).
+2. Query `providerConnections` where `provider = 'antigravity'`.
+3. Extract `email` and `refreshToken` and paste into `config.json` under `accounts`.
+4. Alternatively, instruct an AI agent to copy tokens directly from the database into `config.json`.
 
-### Option B: Google OAuth Web Login (`oauth_helper.py`)
+### Option 2: Dashboard UI Entry
+
+1. Open dashboard (`http://localhost:20130` or `http://YOUR-SERVER-IP:20130`).
+2. Click **Add Account**.
+3. Enter **Email** and **Refresh Token** then click **Add**.
+
+Tokens refresh automatically in the background every 5 minutes.
+
+### Option 3: Google OAuth Web Login (`oauth_helper.py`)
 
 When `OAUTH_*` credentials are configured in `.env`:
 
 ```bash
-# Run local loopback helper on VPS
 python3 oauth_helper.py
 ```
 
-Forward port 8085 via SSH tunnel from your laptop:
+Forward port 8085 if running remotely:
 
 ```bash
 ssh -L 8085:localhost:8085 user@your-vps-ip
 ```
 
-Open `http://localhost:8085/login` in your local browser to authenticate with Google. Refresh tokens add directly to the pool upon success.
+Open `http://localhost:8085/login` in your local browser to authenticate with Google.
 
 ## Rotation Strategies
 
@@ -112,15 +134,13 @@ Open `http://localhost:8085/login` in your local browser to authenticate with Go
 | `round-robin` | Distributes requests sequentially across all active accounts. |
 | `sticky` | Locks to a single account until rate-limited (429), then switches to next account. |
 
-Switch modes anytime via the dashboard control panel.
-
 ## Supported Models
 
 | Model Name | Upstream Target |
 |---|---|
-| `gemini-3.7-flash-high` | `gemini-3.7-flash-high` |
+| `gemini-3.7-flash-high` | `gemini-3.7-flash-tiered` |
+| `gemini-3.7-flash-medium` | `gemini-3.7-flash-tiered` |
 | `gemini-3.6-flash-high` | `gemini-3.6-flash-high` |
-| `gemini-3.6-flash-tiered` | `gemini-3.6-flash-tiered` |
 | `gemini-3.1-pro-high` | `gemini-pro-agent` |
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
 | `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` |

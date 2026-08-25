@@ -261,7 +261,7 @@ def _auth_fail(ip):
         if rec[0] >= AUTH_MAX_FAILURES:
             rec[2] = now + AUTH_LOCKOUT
             rec[0] = 0
-            log_event("WARN", f"🔒 IP {ip} locked out {AUTH_LOCKOUT//60} min after {AUTH_MAX_FAILURES} auth failures")
+            log_event("WARN", f"IP {ip} locked out {AUTH_LOCKOUT//60} min after {AUTH_MAX_FAILURES} auth failures")
         _auth_failures[ip] = rec
 
 def _auth_success(ip):
@@ -894,7 +894,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             _auth_success(ip)
             return True
         _auth_fail(ip)
-        log_event("WARN", f"🔑 Failed dashboard login from {ip}")
+        log_event("WARN", f"Failed dashboard login from {ip}")
         self.send_response(401)
         self.send_header("WWW-Authenticate", 'Basic realm="Antigravity Proxy"')
         self.send_header("Content-Type", "text/html")
@@ -1117,9 +1117,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
         self._security_headers()
         self.end_headers()
         self.wfile.write(f"""<!DOCTYPE html><html><body style="font-family:sans-serif;padding:40px;text-align:center;background:#0f1117;color:#e4e4e7">
-<h2 style="color:#4ade80">✅ Akun berhasil ditambahkan!</h2><p style="color:#a1a1aa">Email: {safe_email}</p>
-<p style="color:#a1a1aa">Total akun: {len(ACCOUNT_STATES)}</p>
-<p><a href="/" style="color:#3b82f6">← Kembali ke Dashboard</a></p></body></html>""".encode())
+<h2 style="color:#4ade80">Account successfully added!</h2><p style="color:#a1a1aa">Email: {safe_email}</p>
+<p style="color:#a1a1aa">Total accounts: {len(ACCOUNT_STATES)}</p>
+<p><a href="/" style="color:#3b82f6">&larr; Back to Dashboard</a></p></body></html>""".encode())
         print(f"[AUTH] Added {email}. Total: {len(ACCOUNT_STATES)}")
 
     def do_POST(self):
@@ -1135,15 +1135,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 email = req.get("email", "").strip()
                 refresh_token = req.get("refresh_token", "").strip()
                 if not email or not refresh_token:
-                    self._send_json(400, {"error": {"message": "email dan refresh_token wajib"}})
+                    self._send_json(400, {"error": {"message": "email and refresh_token are required"}})
                     return
                 # Basic email format validation
                 if "@" not in email or len(email) > 320:
-                    self._send_json(400, {"error": {"message": "Format email tidak valid"}})
+                    self._send_json(400, {"error": {"message": "Invalid email format"}})
                     return
                 # Reject control chars / HTML in email (defense in depth)
                 if any(ord(c) < 32 for c in email) or "<" in email or ">" in email:
-                    self._send_json(400, {"error": {"message": "Email mengandung karakter terlarang"}})
+                    self._send_json(400, {"error": {"message": "Email contains forbidden characters"}})
                     return
             except Exception:
                 self._send_json(400, {"error": {"message": "Invalid JSON"}})
@@ -1260,7 +1260,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     account.expires_at = 0
                 elif e.code == 429:
                     account.rate_limited_until = time.time() + 300
-                    log_event("WARN", f"⚡ Account {account.email} RATE LIMITED (429) — cooldown 5 min, switching account")
+                    log_event("WARN", f"Account {account.email} RATE LIMITED (429) - cooldown 5 min, switching account")
                     excluded_email = account.email
                     continue
                 else:
@@ -1382,8 +1382,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                              um.get("cachedContentTokenCount", 0), "ok", (time.time() - started) * 1000)
             except Exception:
                 pass  # usage is additive; never fail the response
-            log_event("INFO", f"⚡ STREAM {model} via {account.email} done")
-            print(f"  [OK] {account.email} → stream done")
+            log_event("INFO", f"STREAM {model} via {account.email} done")
+            print(f"  [OK] {account.email} -> stream done")
         except Exception as e:
             record_usage(model, 0, 0, 0, "error", (time.time() - started) * 1000)
             err_chunk = {"id": request_id, "object": "chat.completion.chunk", "created": int(time.time()),
@@ -1413,13 +1413,13 @@ def main():
     print("\n[INIT] Pre-refreshing tokens...")
     for acc in ACCOUNT_STATES:
         if acc.disabled:
-            print(f"  ⏸️ {acc.email}: disabled (token still refreshed)")
+            print(f"  [DISABLED] {acc.email}: disabled (token still refreshed)")
         try:
             acc.get_token()
             acc.fetch_quota()
-            print(f"  ✅ {acc.email}: token + quota OK")
+            print(f"  [READY] {acc.email}: token + quota OK")
         except:
-            print(f"  ❌ {acc.email}: failed")
+            print(f"  [FAIL] {acc.email}: failed")
     # Background quota refresh every 5 min
     def _quota_loop():
         while True:
