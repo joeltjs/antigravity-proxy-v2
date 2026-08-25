@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Antigravity Multi-Account Dashboard</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text></svg>">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background-color:#0b0c10;background-image:linear-gradient(to right,rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:24px 24px;background-attachment:fixed;color:#e2e8f0;min-height:100vh;padding:24px 16px}
@@ -112,7 +112,7 @@
   </div>
 
   <div class="header">
-    <h1><span class="header-icon">🚀</span> Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
+    <h1> Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">Models</button>
       <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Click to change routing mode">Change Mode</button>
@@ -130,7 +130,7 @@
 
   <div class="card">
     <div class="card-title">
-      <div><span class="icon">👥</span><span class="title-txt">Account Pool</span></div>
+      <div><span class="title-txt">Account Pool</span></div>
       <span id="last-refresh" style="font-size:11px;color:#94a3b8"></span>
     </div>
     <div id="accounts"><div class="empty">Loading...</div></div>
@@ -138,7 +138,7 @@
 
   <div class="card">
     <div class="card-title">
-      <div><span class="icon">📊</span><span class="title-txt">Usage Monitor</span></div>
+      <div><span class="title-txt">Usage Monitor</span></div>
       <span id="usage-updated" style="font-size:11px;color:#94a3b8"></span>
     </div>
     <!-- 9router Style Timeframe Selector -->
@@ -156,7 +156,7 @@
       <div class="r-card"><div class="r-label">CACHED TOKENS</div><div class="r-num num-cached" id="m-cached">0</div></div>
       <div class="r-card"><div class="r-label">OUTPUT TOKENS</div><div class="r-num num-out" id="m-out">0</div></div>
     </div>
-    <div class="card-title" style="margin-top:14px"><div><span class="icon">🕒</span><span class="title-txt">Recent Requests</span></div></div>
+    <div class="card-title" style="margin-top:14px"><div><span class="title-txt">Recent Requests</span></div></div>
     <div style="overflow-x:auto">
       <table class="u-table">
         <thead><tr>
@@ -172,8 +172,8 @@
 
   <div class="card">
     <div class="card-title">
-      <div><span class="icon">📜</span><span class="title-txt">Live Proxy Logs & Error Tracker</span></div>
-      <button class="refresh-btn" onclick="loadLogs()">🔄 Refresh Logs</button>
+      <div><span class="title-txt">Live Proxy Logs & Error Tracker</span></div>
+      <button class="refresh-btn" onclick="loadLogs()"> Refresh</button>
     </div>
     <div id="log-box" style="background:#0a0a0f;border:1px solid #1e1e26;border-radius:8px;padding:12px;font-family:'SF Mono',Consolas,monospace;font-size:11px;max-height:220px;overflow-y:auto;line-height:1.6;color:#a1a1aa">
       Log konsol kosong...
@@ -181,7 +181,7 @@
   </div>
 
   <div class="card">
-    <div class="card-title"><div><span class="icon">🔌</span><span class="title-txt">Endpoint</span></div></div>
+    <div class="card-title"><div><span class="title-txt">Endpoint</span></div></div>
     <div class="endpoint-box">
       <b>Base URL:</b> <code id="ep-base"></code><br>
       <b>Auth:</b> <code>Bearer &lt;API key dari .env → AG_PROXY_API_KEY&gt;</code><br>
@@ -209,11 +209,11 @@ async function api(path, opts={}) {
     if (window._logsTimer) clearInterval(window._logsTimer);
     if (window._activeTimer) clearInterval(window._activeTimer);
     if (window._usageTimer) clearInterval(window._usageTimer);
-    showToast('❌ Session expired — refresh page and login again', true);
+    showToast(' Session expired — refresh page and login again', true);
     throw new Error('Unauthorized');
   }
   if (r.status === 429) {
-    showToast('⏳ Too many attempts — please wait a moment', true);
+    showToast(' Too many attempts — please wait a moment', true);
     throw new Error('Rate limited');
   }
   return r.json();
@@ -309,7 +309,7 @@ function showQuotaDetail(idx) {
   m.id = 'quota-modal';
   m.onclick = e => { if (e.target === m) m.remove(); };
   m.innerHTML = `<div class="modal">
-    <h3>📊 All Models List</h3>
+    <h3> All Models</h3>
     <div style="max-height:60vh;overflow-y:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr style="color:#52525b;text-align:left"><th style="padding:6px 10px">Model</th><th style="padding:6px 10px;text-align:right">Reset</th></tr></thead>
@@ -363,10 +363,10 @@ async function load() {
                 <div style="display:flex;gap:6px;align-items:center">${badge}${toggleBtn}<button class="btn btn-danger btn-sm" onclick="removeAcc(${idx})">Delete</button></div>
               </div>
               <div class="acc-stats">
-                <span>⏱ TTL: <b>${expMin}</b></span>
-                <span>📊 Req: <b>${a.requests}</b></span>
-                <span>⚠️ Err: <b>${a.errors}</b></span>
-                ${a.last_error ? `<span style="color:#f87171">❌ ${esc(String(a.last_error).substring(0,40))}</span>` : ''}
+                <span> TTL: <b>${expMin}</b></span>
+                <span> Req: <b>${a.requests}</b></span>
+                <span> Err: <b>${a.errors}</b></span>
+                ${a.last_error ? `<span style="color:#f87171"> ${esc(String(a.last_error).substring(0,40))}</span>` : ''}
               </div>
             </div>
             ${quotaHtml}
@@ -401,21 +401,21 @@ async function toggleStrategy() {
     currentStrategy = d.strategy;
     document.getElementById('strategy-tag').textContent = d.strategy;
     showToast(d.strategy === 'sticky'
-      ? '📌 Mode sticky: pakai 1 akun sampai limit, lalu pindah'
-      : '🔀 Mode round-robin: ganti akun tiap request');
+      ? ' Sticky mode: use 1 account until rate limit, then switch'
+      : ' Round-robin mode: alternate accounts per request');
   }
 }
 async function removeAcc(idx) {
   // Index-based lookup — email TIDAK pernah masuk ke attribute onclick (anti-injection)
   const email = window._accEmails && window._accEmails[idx];
-  if (!email) { showToast('❌ Account not found', true); return; }
+  if (!email) { showToast(' Account not found', true); return; }
   if (!confirm('Delete account '+email+'?')) return;
   await api('/v1/accounts/remove', {method:'POST', body: JSON.stringify({email})});
   load();
 }
 async function toggleAcc(idx) {
   const email = window._accEmails && window._accEmails[idx];
-  if (!email) { showToast('❌ Account not found', true); return; }
+  if (!email) { showToast(' Account not found', true); return; }
   await api('/v1/accounts/toggle', {method:'POST', body: JSON.stringify({email})});
   load();
 }
@@ -424,7 +424,7 @@ function showAddModal() {
   m.className = 'modal-bg';
   m.id = 'add-modal';
   m.innerHTML = `<div class="modal" onclick="event.stopPropagation()">
-    <h3>➕ Add Account Manually</h3>
+    <h3> Add Account</h3>
     <p style="font-size:12px;color:#71717a;margin-bottom:8px">Paste email + refresh token from your Google AI Pro account.</p>
     <label>Email</label>
     <input type="text" id="add-email" placeholder="example@gmail.com">
@@ -446,37 +446,37 @@ async function submitAdd() {
   const r = await api('/v1/accounts/add', {method:'POST', body: JSON.stringify({email, refresh_token: token})});
   document.getElementById('add-modal').remove();
   if (r.ok) {
-    showToast('✅ Account ' + email + ' added! Total: ' + r.total);
+    showToast(' Account ' + email + ' added! Total: ' + r.total);
     load();
   } else {
-    showToast('❌ ' + (r.error?.message || 'Failed'), true);
+    showToast(' ' + (r.error?.message || 'Failed'), true);
   }
 }
 async function showAllModels() {
   const d = await api('/v1/all-models');
   const models = d.models || [];
-  const kindIcon = {chat: '💬', image: '🖼️', completion: '🧩'};
+  const kindIcon = {chat: '', image: '', completion: ''};
   // Kelompokkan per POOL KUOTA (sama dengan kartu quota di atas):
-  // - Gemini Pool: semua gemini-* (termasuk image model — share kuota Gemini)
-  // - Third-Party Pool: claude-* + gpt-oss (completion) — satu pool bersama
+  // - Gemini Pool: all gemini-* models sharing quota
+  // - Third-Party Pool: claude-* and gpt-oss sharing pool
   const groups = {};
   models.forEach(m => {
     const key = familyOf(m.id);
     if (!groups[key]) groups[key] = [];
     groups[key].push(m);
   });
-  const SECTION_LABEL = { gemini: '💎 Gemini Pool', third: '🔌 Third-Party Pool' };
+  const SECTION_LABEL = { gemini: ' Gemini Pool', third: ' Third-Party Pool' };
   let sectionsHtml = '';
   Object.keys(SECTION_LABEL).forEach(key => {
     const items = groups[key];
     if (!items || !items.length) return;
     const rows = items.map(m =>
       `<div style="display:flex;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #1e1e26;font-size:13px">
-        <span>${kindIcon[m.kind]||'💬'} <b style="color:#e4e4e7">${esc(m.display)}</b></span>
+        <span>${kindIcon[m.kind]||''} <b style="color:#e4e4e7">${esc(m.display)}</b></span>
         <code style="font-size:11px">${esc(m.id)}</code>
       </div>`).join('');
     sectionsHtml += `<div style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:#a1a1aa;margin-bottom:6px;padding:0 2px">${SECTION_LABEL[key]} <span style="color:#52525b;font-weight:400">· ${items.length} models</span></div>
+      <div style="font-size:12px;font-weight:700;color:#a1a1aa;margin-bottom:6px;padding:0 2px">${SECTION_LABEL[key]} <span style="color:#52525b;font-weight:400">- ${items.length} models</span></div>
       <div style="border:1px solid #1e1e26;border-radius:8px;overflow:hidden">${rows}</div>
     </div>`;
   });
@@ -484,7 +484,7 @@ async function showAllModels() {
   m.className = 'modal-bg';
   m.id = 'models-modal';
   m.innerHTML = `<div class="modal" style="max-width:560px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
-    <h3>📋 All Upstream Models (${models.length})</h3>
+    <h3> All Upstream Models (${models.length})</h3>
     <p style="font-size:12px;color:#71717a;margin-bottom:12px">Grouped by quota pool — Third-Party Pool contains Claude + GPT-OSS (completion). Hermes uses 5 main models.</p>
     ${sectionsHtml}
     <div class="modal-actions">
@@ -586,7 +586,7 @@ async function loadActive() {
       modelEl.style.color = '#4ade80';
       detailEl.textContent = 'Account in use: ' + a.account;
       detailEl.style.color = '#4ade80';
-      statusEl.textContent = '⚡ Active — ' + a.elapsed + 's';
+      statusEl.textContent = ' Active — ' + a.elapsed + 's';
       statusEl.style.color = '#4ade80';
       // Detail list kalo ada multiple request
       if (d.active.length > 1) {
