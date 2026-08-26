@@ -50,6 +50,7 @@ Edit `config.json`:
   "port": 20130,
   "host": "0.0.0.0",
   "strategy": "round-robin",
+  "api_key": "your_generated_api_key",
   "accounts": []
 }
 ```
@@ -58,15 +59,14 @@ Host configuration:
 - Use `"host": "0.0.0.0"` if running on a VPS or container to allow external or subdomain access.
 - Use `"host": "127.0.0.1"` if running exclusively on your local machine.
 
-Edit `.env` and set your credentials:
+Generate an API key with `openssl rand -hex 16` or use the dashboard endpoint `POST /v1/api-key/generate`.
+
+Edit `.env` for dashboard basic auth credentials:
 
 ```env
-AG_PROXY_API_KEY=your_api_key
-AG_DASHBOARD_USER=your_dashboard_user
+AG_DASHBOARD_USER=admin
 AG_DASHBOARD_PASSWORD=your_secure_password
 ```
-
-Generate an API key with `openssl rand -hex 16`.
 
 ### 3. Run the Proxy
 

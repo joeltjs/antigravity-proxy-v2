@@ -47,7 +47,8 @@ with open(CONFIG_PATH) as f:
 PORT = CONFIG.get("port", 20130)
 HOST = CONFIG.get("host", "0.0.0.0")
 # Credentials: env var > .env file > config.json fallback
-API_KEY = os.environ.get("AG_PROXY_API_KEY") or _ENV_FILE.get("AG_PROXY_API_KEY") or CONFIG.get("api_key", "")
+# API key for /v1/* endpoints (loaded from config.json or environment)
+API_KEY = os.environ.get("AG_PROXY_API_KEY") or CONFIG.get("api_key", "")
 DASHBOARD_USER = os.environ.get("AG_DASHBOARD_USER") or _ENV_FILE.get("AG_DASHBOARD_USER") or CONFIG.get("dashboard_user", "admin")
 DASHBOARD_PASSWORD = os.environ.get("AG_DASHBOARD_PASSWORD") or _ENV_FILE.get("AG_DASHBOARD_PASSWORD") or CONFIG.get("dashboard_password", "")
 # OAuth (Google Cloud Console): env var > .env > config.json (Optional: for web OAuth login like 9router)
@@ -956,6 +957,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"models": FULL_MODEL_CATALOG})
             return
 
+        if self.path == "/v1/api-key":
+            if not self._check_auth(): return
+            self._send_json(200, {"api_key": API_KEY})
+            return
+
         if self.path == "/v1/active":
             if not self._check_auth(): return
             with _active_lock:
@@ -1125,6 +1131,16 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if not self._check_auth(): return
+
+        if self.path == "/v1/api-key/generate":
+            global API_KEY
+            new_key = "ag-proxy-" + secrets.token_hex(16)
+            API_KEY = new_key
+            CONFIG["api_key"] = new_key
+            _save_accounts()
+            log_event("INFO", "Generated new API key via dashboard")
+            self._send_json(200, {"api_key": new_key})
+            return
 
         if self.path == "/v1/accounts/add":
             body_raw, err = self._read_body(64 * 1024)
