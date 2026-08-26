@@ -61,8 +61,8 @@ Host configuration:
 Edit `.env` and set your credentials:
 
 ```env
-AG_PROXY_API_KEY=your_generated_api_key
-AG_DASHBOARD_USER=admin
+AG_PROXY_API_KEY=your_api_key
+AG_DASHBOARD_USER=your_dashboard_user
 AG_DASHBOARD_PASSWORD=your_secure_password
 ```
 
