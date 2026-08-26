@@ -494,7 +494,8 @@ MODEL_MAP = {
 # Full upstream catalog (for dashboard "show all models" button).
 # Source: Antigravity API; includes image & completion models not exposed to Hermes.
 FULL_MODEL_CATALOG = [
-    {"id": "gemini-3.7-flash-high", "display": "Gemini 3.6 Flash (Tiered)", "kind": "chat"},
+    {"id": "gemini-3.7-flash-high", "display": "Gemini 3.7 Flash (High)", "kind": "chat"},
+    {"id": "gemini-3.7-flash-tiered", "display": "Gemini 3.7 Flash (Tiered)", "kind": "chat"},
     {"id": "gemini-3.6-flash-tiered", "display": "Gemini 3.6 Flash (Tiered)", "kind": "chat"},
     {"id": "gemini-3.6-flash-high", "display": "Gemini 3.6 Flash (High)", "kind": "chat"},
     {"id": "gemini-3.6-flash-medium", "display": "Gemini 3.6 Flash (Medium)", "kind": "chat"},
