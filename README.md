@@ -141,8 +141,8 @@ Open `http://localhost:8085/login` in your local browser to authenticate with Go
 
 | Model Name | Upstream Target |
 |---|---|
-| `gemini-3.7-flash-high` | `gemini-3.7-flash-tiered` |
-| `gemini-3.7-flash-medium` | `gemini-3.7-flash-tiered` |
+| `gemini-3.7-flash-high` | `gemini-3.7-flash-high` |
+| `gemini-3.7-flash-tiered` | `gemini-3.7-flash-tiered` |
 | `gemini-3.6-flash-high` | `gemini-3.6-flash-high` |
 | `gemini-3.1-pro-high` | `gemini-pro-agent` |
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
