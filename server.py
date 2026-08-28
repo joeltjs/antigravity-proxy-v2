@@ -934,14 +934,18 @@ class ProxyHandler(BaseHTTPRequestHandler):
         if self._basic_auth_ok():
             _auth_success(ip)
             return True
-        _auth_fail(ip)
-        log_event("WARN", f"Failed dashboard login from {ip}")
-        self.send_response(401)
-        self.send_header("WWW-Authenticate", 'Basic realm="Antigravity Proxy"')
-        self.send_header("Content-Type", "text/html")
+        
+        # Serve modern dark login UI instead of browser popup
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
         self._security_headers()
         self.end_headers()
-        self.wfile.write(b"<h1>401 Unauthorized</h1>")
+        login_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "login.html")
+        if os.path.exists(login_path):
+            with open(login_path, "rb") as lf:
+                self.wfile.write(lf.read())
+        else:
+            self.wfile.write(b"<h1>Please login</h1>")
         return False
 
     def do_GET(self):
@@ -1176,6 +1180,39 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         global API_KEYS
+
+        if self.path == "/auth/login-web":
+            body_raw, err = self._read_body(64 * 1024)
+            ip = self._client_ip()
+            if not _auth_allowed(ip):
+                self._send_json(429, {"error": {"message": "Too many failed attempts. Please wait."}})
+                return
+            if err or not body_raw:
+                self._send_json(400, {"error": {"message": "Missing credentials"}})
+                return
+            try:
+                data = json.loads(body_raw)
+                u = data.get("username", "").strip()
+                p = data.get("password", "")
+                if secrets.compare_digest(u, DASHBOARD_USER) and secrets.compare_digest(p, DASHBOARD_PASSWORD):
+                    _auth_success(ip)
+                    tok = _issue_session_token()
+                    cookie_val = f"ag_session={tok}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400"
+                    self.send_response(200)
+                    self.send_header("Set-Cookie", cookie_val)
+                    self.send_header("Content-Type", "application/json")
+                    self._security_headers()
+                    self.end_headers()
+                    self.wfile.write(b'{"ok": true}')
+                    log_event("INFO", f"Dashboard login success from {ip}")
+                else:
+                    _auth_fail(ip)
+                    log_event("WARN", f"Dashboard login failed from {ip}")
+                    self._send_json(401, {"error": {"message": "Invalid username or password"}})
+            except Exception as e:
+                self._send_json(400, {"error": {"message": str(e)}})
+            return
+
         if not self._check_auth(): return
 
         if self.path == "/v1/api-keys/create" or self.path == "/v1/api-key/generate":
