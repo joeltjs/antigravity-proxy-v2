@@ -181,12 +181,15 @@
   </div>
 
   <div class="card">
-    <div class="card-title"><div><span class="title-txt">Endpoint</span></div></div>
+    <div class="card-title">
+      <div><span class="title-txt">Endpoint & API Key</span></div>
+      <button class="action-btn" onclick="generateNewApiKey()" style="font-size:11px;padding:4px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer">Generate New Key</button>
+    </div>
     <div class="endpoint-box">
       <b>Base URL:</b> <code id="ep-base"></code><br>
-      <b>Auth:</b> <code>Bearer &lt;API key dari .env → AG_PROXY_API_KEY&gt;</code><br>
-      <b>Models (5):</b> gemini-3.6-flash-high, gemini-3.5-flash-high, gemini-3.1-pro-high, claude-sonnet-4-6-thinking, claude-opus-4-6-thinking<br><br>
-      <b>Test:</b><br>
+      <b>Active API Key:</b> <code id="ep-key" style="color:#4ade80;font-weight:700">Loading...</code> <button onclick="copyApiKey()" style="margin-left:8px;padding:2px 8px;font-size:10px;background:#27272a;color:#cbd5e1;border:1px solid #3f3f46;border-radius:4px;cursor:pointer">Copy</button><br>
+      <b>Models:</b> gemini-3.7-flash-high, gemini-3.7-flash-medium, gemini-3.6-flash-high, gemini-3.1-pro-high, claude-sonnet-4-6-thinking, claude-opus-4-6-thinking<br><br>
+      <b>Test Command:</b><br>
       <code id="ep-curl" style="display:block;padding:10px;white-space:pre-wrap;word-break:break-word;overflow-x:auto"></code>
     </div>
   </div>
@@ -617,16 +620,48 @@ async function loadActive() {
     }
   } catch(e) {}
 }
+let currentApiKey = '';
+async function loadApiKey() {
+  try {
+    const r = await api('/v1/api-key');
+    if (r && r.api_key) {
+      currentApiKey = r.api_key;
+      document.getElementById('ep-key').textContent = currentApiKey;
+      fillEndpoint();
+    }
+  } catch (e) {}
+}
+async function generateNewApiKey() {
+  if (!confirm('Generate a new API key? Existing consumers will need to update their key.')) return;
+  try {
+    const r = await api('/v1/api-key/generate', { method: 'POST' });
+    if (r && r.api_key) {
+      currentApiKey = r.api_key;
+      document.getElementById('ep-key').textContent = currentApiKey;
+      fillEndpoint();
+      showToast('New API key generated successfully!');
+    }
+  } catch (e) {
+    showToast('Failed to generate key', true);
+  }
+}
+function copyApiKey() {
+  if (!currentApiKey) return;
+  navigator.clipboard.writeText(currentApiKey).then(() => showToast('API key copied!')).catch(() => {});
+}
+
 // Isi endpoint dinamis dari origin saat ini — IP/host TIDAK pernah hardcoded di source
-(function fillEndpoint(){
+function fillEndpoint(){
   const base = location.origin + '/v1';
   document.getElementById('ep-base').textContent = base;
   document.getElementById('ep-curl').textContent =
     'curl ' + base + '/chat/completions \\\n' +
-    '  -H "Authorization: Bearer ***" \\\n' +
+    '  -H "Authorization: Bearer ' + (currentApiKey || 'your_api_key') + '" \\\n' +
     '  -H "Content-Type: application/json" \\\n' +
-    '  -d \'{"model":"gemini-3.6-flash-high","messages":[{"role":"user","content":"halo"}]}\'';
-})();
+    '  -d \'{"model":"gemini-3.7-flash-high","messages":[{"role":"user","content":"hi"}]}\'';
+}
+fillEndpoint();
+loadApiKey();
 load();
 loadLogs();
 loadActive();
