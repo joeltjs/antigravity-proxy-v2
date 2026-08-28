@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Antigravity Multi-Account Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22></text></svg>">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
@@ -680,8 +681,18 @@ function renderApiKeysTable() {
 }
 
 async function promptCreateApiKey() {
-  const name = prompt('Enter a label for this API key (e.g. Kilo Code, Cursor, OpenCode):', 'Kilo Code');
-  if (name === null) return;
+  const { value: name } = await Swal.fire({
+    title: 'Create New API Key',
+    input: 'text',
+    inputLabel: 'Key Label / Consumer Name',
+    inputPlaceholder: 'e.g. Kilo Code, Cursor, OpenCode',
+    showCancelButton: true,
+    confirmButtonColor: '#3b82f6',
+    cancelButtonColor: '#27272a',
+    background: '#12141d',
+    color: '#f4f4f5'
+  });
+  if (!name) return;
   try {
     const r = await api('/v1/api-keys/create', {
       method: 'POST',
@@ -691,15 +702,25 @@ async function promptCreateApiKey() {
       allApiKeys = r.api_keys;
       renderApiKeysTable();
       fillEndpoint();
-      showToast('API Key created successfully!');
+      Swal.fire({ icon: 'success', title: 'API Key Created', background: '#12141d', color: '#f4f4f5', timer: 1500, showConfirmButton: false });
     }
   } catch (e) {
-    showToast('Failed to create key', true);
+    Swal.fire({ icon: 'error', title: 'Failed to create key', background: '#12141d', color: '#f4f4f5' });
   }
 }
 
 async function deleteApiKey(id, key, name) {
-  if (!confirm(`Delete API key "${name}"? Apps using this key will lose access.`)) return;
+  const result = await Swal.fire({
+    title: 'Delete API Key?',
+    text: `Are you sure you want to delete "${name}"? Apps using this key will lose access.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#27272a',
+    background: '#12141d',
+    color: '#f4f4f5'
+  });
+  if (!result.isConfirmed) return;
   try {
     const r = await api('/v1/api-keys/delete', {
       method: 'POST',
@@ -709,10 +730,10 @@ async function deleteApiKey(id, key, name) {
       allApiKeys = r.api_keys;
       renderApiKeysTable();
       fillEndpoint();
-      showToast('API Key deleted');
+      Swal.fire({ icon: 'success', title: 'Key Deleted', background: '#12141d', color: '#f4f4f5', timer: 1500, showConfirmButton: false });
     }
   } catch (e) {
-    showToast('Failed to delete key', true);
+    Swal.fire({ icon: 'error', title: 'Failed to delete key', background: '#12141d', color: '#f4f4f5' });
   }
 }
 
@@ -725,10 +746,10 @@ function fillEndpoint(){
   document.getElementById('ep-base').textContent = base;
   const sampleKey = allApiKeys.length ? allApiKeys[0].key : 'your_api_key';
   document.getElementById('ep-curl').textContent =
-    'curl ' + base + '/chat/completions \\\n' +
-    '  -H "Authorization: Bearer ' + sampleKey + '" \\\n' +
-    '  -H "Content-Type: application/json" \\\n' +
-    '  -d \'{"model":"gemini-3.7-flash-high","messages":[{"role":"user","content":"hi"}]}\';
+    `curl ${base}/chat/completions \\\n` +
+    `  -H "Authorization: Bearer ${sampleKey}" \\\n` +
+    `  -H "Content-Type: application/json" \\\n` +
+    `  -d '{"model":"gemini-3.7-flash-high","messages":[{"role":"user","content":"hi"}]}'`;
 }
 fillEndpoint();
 loadApiKeys();
