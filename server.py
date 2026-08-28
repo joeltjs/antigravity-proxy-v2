@@ -46,9 +46,45 @@ with open(CONFIG_PATH) as f:
 
 PORT = CONFIG.get("port", 20130)
 HOST = CONFIG.get("host", "0.0.0.0")
-# Credentials: env var > .env file > config.json fallback
-# API key for /v1/* endpoints (loaded from config.json or environment)
-API_KEY = os.environ.get("AG_PROXY_API_KEY") or CONFIG.get("api_key", "")
+# API keys for /v1/* endpoints (multiple keys supported: config.json or environment)
+def _load_api_keys():
+    keys = []
+    # From config.json api_keys list
+    if "api_keys" in CONFIG and isinstance(CONFIG["api_keys"], list):
+        for k in CONFIG["api_keys"]:
+            if isinstance(k, dict) and k.get("key"):
+                keys.append(k)
+            elif isinstance(k, str) and k.strip():
+                keys.append({"id": f"key-{len(keys)+1}", "name": "Default Key", "key": k.strip(), "created": int(time.time())})
+    # From legacy single api_key in config.json
+    elif CONFIG.get("api_key"):
+        keys.append({"id": "key-1", "name": "Default Key", "key": CONFIG["api_key"].strip(), "created": int(time.time())})
+    # Fallback to env var
+    env_key = os.environ.get("AG_PROXY_API_KEY")
+    if env_key and not any(k["key"] == env_key for k in keys):
+        keys.append({"id": f"key-{len(keys)+1}", "name": "Env Key", "key": env_key.strip(), "created": int(time.time())})
+    # If completely empty, generate a default one
+    if not keys:
+        default_k = "ag-proxy-" + secrets.token_hex(16)
+        keys.append({"id": "key-1", "name": "Default Key", "key": default_k, "created": int(time.time())})
+        CONFIG["api_keys"] = keys
+        CONFIG.pop("api_key", None)
+        try:
+            with open(CONFIG_PATH, "w") as f:
+                json.dump(CONFIG, f, indent=2)
+        except Exception: pass
+    return keys
+
+API_KEYS = _load_api_keys()
+
+def _save_api_keys():
+    CONFIG["api_keys"] = API_KEYS
+    CONFIG.pop("api_key", None)
+    try:
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(CONFIG, f, indent=2)
+    except Exception as e:
+        print(f"  [WARN] Save API keys error: {e}")
 DASHBOARD_USER = os.environ.get("AG_DASHBOARD_USER") or _ENV_FILE.get("AG_DASHBOARD_USER") or CONFIG.get("dashboard_user", "admin")
 DASHBOARD_PASSWORD = os.environ.get("AG_DASHBOARD_PASSWORD") or _ENV_FILE.get("AG_DASHBOARD_PASSWORD") or CONFIG.get("dashboard_password", "")
 # OAuth (Google Cloud Console): env var > .env > config.json (Optional: for web OAuth login like 9router)
@@ -841,8 +877,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
     def _bearer_ok(self):
         auth = self.headers.get("Authorization", "")
-        if auth.startswith("Bearer ") and secrets.compare_digest(auth[7:], API_KEY):
-            return True
+        if auth.startswith("Bearer "):
+            token = auth[7:].strip()
+            for k in API_KEYS:
+                if secrets.compare_digest(token, k["key"]):
+                    return True
         return False
 
     def _cookie_session_ok(self):
@@ -957,9 +996,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"models": FULL_MODEL_CATALOG})
             return
 
+        if self.path == "/v1/api-keys":
+            if not self._check_auth(): return
+            self._send_json(200, {"api_keys": API_KEYS})
+            return
+
         if self.path == "/v1/api-key":
             if not self._check_auth(): return
-            self._send_json(200, {"api_key": API_KEY})
+            primary_key = API_KEYS[0]["key"] if API_KEYS else ""
+            self._send_json(200, {"api_key": primary_key, "api_keys": API_KEYS})
             return
 
         if self.path == "/v1/active":
@@ -1130,16 +1175,50 @@ class ProxyHandler(BaseHTTPRequestHandler):
         print(f"[AUTH] Added {email}. Total: {len(ACCOUNT_STATES)}")
 
     def do_POST(self):
+        global API_KEYS
         if not self._check_auth(): return
 
-        if self.path == "/v1/api-key/generate":
-            global API_KEY
+        if self.path == "/v1/api-keys/create" or self.path == "/v1/api-key/generate":
+            body_raw, _ = self._read_body(64 * 1024)
+            name = "API Key"
+            if body_raw:
+                try:
+                    req_data = json.loads(body_raw)
+                    name = req_data.get("name", "API Key").strip() or "API Key"
+                except Exception: pass
             new_key = "ag-proxy-" + secrets.token_hex(16)
-            API_KEY = new_key
-            CONFIG["api_key"] = new_key
-            _save_accounts()
-            log_event("INFO", "Generated new API key via dashboard")
-            self._send_json(200, {"api_key": new_key})
+            new_entry = {
+                "id": f"key-{int(time.time()*1000)}",
+                "name": name,
+                "key": new_key,
+                "created": int(time.time())
+            }
+            API_KEYS.append(new_entry)
+            _save_api_keys()
+            log_event("INFO", f"Created new API key: {name}")
+            self._send_json(200, {"success": True, "api_key": new_key, "entry": new_entry, "api_keys": API_KEYS})
+            return
+
+        if self.path == "/v1/api-keys/delete":
+            body_raw, err = self._read_body(64 * 1024)
+            if err or not body_raw:
+                self._send_json(400, {"error": {"message": err or "Missing request body"}})
+                return
+            try:
+                req_data = json.loads(body_raw)
+                target_key = req_data.get("key", "").strip()
+                target_id = req_data.get("id", "").strip()
+                
+                initial_len = len(API_KEYS)
+                API_KEYS = [k for k in API_KEYS if (k["key"] != target_key and k["id"] != target_id)]
+                if len(API_KEYS) < initial_len:
+                    _save_api_keys()
+                    log_event("INFO", f"Deleted API key: {target_id or target_key[:12]}")
+                    self._send_json(200, {"success": True, "api_keys": API_KEYS})
+                else:
+                    self._send_json(404, {"error": {"message": "Key not found"}})
+            except Exception as e:
+                self._send_json(400, {"error": {"message": f"Invalid request: {e}"}})
             return
 
         if self.path == "/v1/accounts/add":
