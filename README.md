@@ -151,10 +151,10 @@ Open `http://localhost:8085/login` in your local browser to authenticate with Go
 ## Troubleshooting & Geo-restriction Fix
 
 ### 1. `HTTP 400: User location is not supported for the API use`
-Google Cloud Code API (`daily-cloudcode-pa.googleapis.com`) blocks datacenter IP ranges in certain regions (e.g. Oracle Cloud Indonesia). 
+This error occurs when the server's IP region is restricted by the upstream API.
 
-**Solution:** Route only Google API outbound traffic through Cloudflare WARP SOCKS5 proxy.
-👉 See full setup guide: [`docs/WARP_SETUP.md`](docs/WARP_SETUP.md)
+**Solution:** Route API requests through Cloudflare WARP SOCKS5 proxy.
+👉 See setup guide: [`WARP_SETUP.md`](WARP_SETUP.md)
 
 ---
 
