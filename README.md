@@ -158,11 +158,11 @@ This error occurs when the server's IP region is restricted by the upstream API.
 
 ---
 
-### 2. How to Import Accounts from 9router (Zero-Config)
-If you already use 9router, you can easily copy your refresh tokens:
-1. Open **9router Web UI** ➔ Go to **Settings** (`/settings`).
-2. Check the **Local Mode** section at the top to view your SQLite database path (default: `~/.9router/db/data.sqlite` or `/app/data/db/data.sqlite` in Docker).
-3. Copy the `refreshToken` entries under `providerConnections` where `provider = 'antigravity'` into `config.json`'s `accounts` list.
+### 2. How to Import Accounts from 9router (1-Click & Manual)
+You can easily import your Antigravity accounts from 9router:
+
+- **Method 1 (1-Click Button in Dashboard):** Click the **"📥 Import from 9router"** button in the top navigation bar. It automatically scans standard 9router database paths and imports all Antigravity connections.
+- **Method 2 (Manual Copy):** Open 9router Web UI ➔ **Settings** (`/settings`) ➔ check **Local Mode** at the top for your `data.sqlite` path. Copy the `refreshToken` entries under `providerConnections` (`provider = 'antigravity'`) into `config.json`.
 
 ---
 
