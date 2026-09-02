@@ -219,7 +219,17 @@
 <script>
 // Auth: dashboard memakai httpOnly session cookie (di-set server saat login).
 // TIDAK ADA secret di JS/localStorage — cookie tidak bisa dibaca JavaScript.
-function esc(s) {
+function showFullError(email, fullErr) {
+  Swal.fire({
+    title: 'Error Detail: ' + email,
+    html: `<pre style="text-align:left;background:#0b0c10;color:#f87171;padding:12px;border-radius:6px;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">${esc(fullErr)}</pre>`,
+    background: '#12141d',
+    color: '#f4f4f5',
+    confirmButtonColor: '#3b82f6'
+  });
+}
+
+function esc(s){
   // HTML-escape semua data dinamis sebelum masuk DOM (anti-XSS)
   if (s === null || s === undefined) return '';
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -390,7 +400,7 @@ async function load() {
                 <span> TTL: <b>${expMin}</b></span>
                 <span> Req: <b>${a.requests}</b></span>
                 <span> Err: <b>${a.errors}</b></span>
-                ${a.last_error ? `<span style="color:#f87171"> ${esc(String(a.last_error).substring(0,40))}</span>` : ''}
+                ${a.last_error ? `<span class="err-badge" title="${esc(String(a.last_error))}" onclick="showFullError('${esc(a.email)}', '${esc(String(a.last_error).replace(/'/g, "\\'"))}')" style="color:#f87171;cursor:pointer;background:rgba(239,68,68,0.1);padding:2px 6px;border-radius:4px;border:1px solid rgba(239,68,68,0.2)"> ⚠️ ${esc(String(a.last_error).substring(0,30))}...</span>` : ''}
               </div>
             </div>
             ${quotaHtml}

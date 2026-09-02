@@ -1382,6 +1382,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     "User-Agent": "antigravity/ide/2.1.1 darwin/arm64"})
             try:
                 resp = urllib.request.urlopen(req, timeout=300)
+                # Auto-clear error state on successful connection
+                account.error_count = 0
+                account.last_error = None
             except urllib.error.HTTPError as e:
                 err_body = e.read().decode()
                 account.error_count += 1
