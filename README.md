@@ -148,6 +148,24 @@ Open `http://localhost:8085/login` in your local browser to authenticate with Go
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
 | `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` |
 
+## Troubleshooting & Geo-restriction Fix
+
+### 1. `HTTP 400: User location is not supported for the API use`
+Google Cloud Code API (`daily-cloudcode-pa.googleapis.com`) blocks datacenter IP ranges in certain regions (e.g. Oracle Cloud Indonesia). 
+
+**Solution:** Route only Google API outbound traffic through Cloudflare WARP SOCKS5 proxy.
+👉 See full setup guide: [`docs/WARP_SETUP.md`](docs/WARP_SETUP.md)
+
+---
+
+### 2. How to Import Accounts from 9router (Zero-Config)
+If you already use 9router, you can easily copy your refresh tokens:
+1. Open **9router Web UI** ➔ Go to **Settings** (`/settings`).
+2. Check the **Local Mode** section at the top to view your SQLite database path (default: `~/.9router/db/data.sqlite` or `/app/data/db/data.sqlite` in Docker).
+3. Copy the `refreshToken` entries under `providerConnections` where `provider = 'antigravity'` into `config.json`'s `accounts` list.
+
+---
+
 ## License
 
 MIT License
