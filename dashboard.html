@@ -208,8 +208,20 @@
     </div>
     <p style="font-size:12px;color:#94a3b8;margin-bottom:12px">Manage individual API keys for client access (e.g. Kilo Code, Claude Code, OpenCode). All keys can access the <code>/v1/*</code> endpoints.</p>
     
-    <div id="api-keys-container">
-      <div class="empty">Loading API keys...</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.08);color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:.4px">
+            <th style="padding:8px 6px">Name</th>
+            <th style="padding:8px 6px">API Key</th>
+            <th style="padding:8px 6px">Created</th>
+            <th style="padding:8px 6px;text-align:right">Action</th>
+          </tr>
+        </thead>
+        <tbody id="api-keys-table">
+          <tr><td colspan="4" style="padding:12px 6px;color:#94a3b8">Loading keys...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
