@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -220,12 +220,12 @@
 </div>
 
 <script>
-// Auth: dashboard memakai httpOnly session cookie (di-set server saat login).
-// TIDAK ADA secret di JS/localStorage — cookie tidak bisa dibaca JavaScript.
+// Auth: dashboard uses httpOnly session cookie set by server on login.
+// No secrets stored in JS or localStorage.
 async function importFrom9router(customPath) {
   Swal.fire({
     title: 'Import from 9router',
-    text: 'Scanning local 9router SQLite database...',
+    text: 'Scanning 9router database...',
     allowOutsideClick: false,
     didOpen: () => Swal.showLoading()
   });
@@ -239,30 +239,41 @@ async function importFrom9router(customPath) {
 
     if (res.ok) {
       const d = await res.json();
+      let msg = '';
+      if (d.imported > 0 && d.updated > 0) {
+        msg = `${d.imported} new account(s) imported, ${d.updated} account(s) updated.`;
+      } else if (d.imported > 0) {
+        msg = `${d.imported} new account(s) imported successfully.`;
+      } else if (d.updated > 0) {
+        msg = `${d.updated} existing account(s) refreshed and updated.`;
+      } else {
+        msg = 'All accounts are already up to date.';
+      }
+
       await Swal.fire({
         icon: 'success',
-        title: 'Import Berhasil!',
-        text: `Berhasil mengimpor ${d.imported} akun baru (${d.updated} diupdate) dari ${d.db_path}`,
+        title: 'Import Successful',
+        text: msg,
         timer: 3000
       });
       load();
     } else if (res.status === 404) {
       const err = await res.json();
       const { value: manualPath } = await Swal.fire({
-        title: '9router DB Tidak Ditemukan',
-        text: 'Database default tidak terdeteksi. Masukkan path absolut ke file data.sqlite 9router Anda:',
+        title: '9router Database Not Found',
+        text: 'Default locations were not found. Enter the path to your 9router data.sqlite file:',
         input: 'text',
-        inputPlaceholder: '/home/ubuntu/.9router/db/data.sqlite',
+        inputPlaceholder: '~/.9router/db/data.sqlite',
         showCancelButton: true,
-        confirmButtonText: 'Scan Path Ini',
-        cancelButtonText: 'Batal'
+        confirmButtonText: 'Scan Path',
+        cancelButtonText: 'Cancel'
       });
       if (manualPath) {
         importFrom9router(manualPath);
       }
     } else {
       const err = await res.json();
-      Swal.fire({ icon: 'error', title: 'Import Gagal', text: err.error?.message || 'Gagal membaca database 9router' });
+      Swal.fire({ icon: 'error', title: 'Import Failed', text: err.error?.message || 'Failed to read 9router database.' });
     }
   } catch (e) {
     Swal.fire({ icon: 'error', title: 'Error', text: e.message });
