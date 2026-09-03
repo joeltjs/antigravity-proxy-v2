@@ -92,9 +92,10 @@ Or run as a systemd background service.
 
 | Model Name (OpenAI Format) | Upstream Model Mapping |
 |---|---|
-| `gemini-3.7-flash-high` | `gemini-2.5-flash` |
-| `gemini-3.7-flash-medium` | `gemini-2.5-flash` |
-| `gemini-3.6-flash-high` | `gemini-2.5-flash` |
+| `gemini-3.7-flash-high` | `gemini-3.7-flash-high` |
+| `gemini-3.7-flash-medium` | `gemini-3.7-flash-medium` |
+| `gemini-3.6-flash-high` | `gemini-3.6-flash` |
+| `gemini-pro-agent` | `gemini-3.1-pro`
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
 | `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` |
 
