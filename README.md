@@ -1,4 +1,7 @@
-# Antigravity Multi-Account Proxy v2
+# Antigravity Multi-Account Proxy v2.1.1
+
+![Version](https://img.shields.io/badge/version-2.1.1-0284c7)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 OpenAI-compatible reverse proxy that aggregates multiple Google Antigravity accounts into a single load-balanced endpoint with automatic rate-limit failover, quota tracking, session authentication, and multi-API key support.
 
