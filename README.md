@@ -26,11 +26,10 @@ There are 3 standard ways to add accounts:
   - `/app/data/db/data.sqlite` (Docker container)
 
 - Manual Input (If default locations are not found):
-  If the automatic scan cannot find the database, a path input prompt will appear. You can find your database location in 9router:
-  1. Open 9router Web UI -> Settings (/settings).
-  2. Check the Local Mode section at the top.
-  3. Copy the database path shown there (e.g. `/path/to/data.sqlite`).
-  4. Paste it into the input prompt, or set `"router_db_path": "/path/to/data.sqlite"` directly in `config.json`. Once verified, the path is saved automatically for future scans.
+  If the automatic scan cannot find the database, a path input prompt will appear. You can find your database location in 9router web interface:
+  1. Open 9router web dashboard and click the Settings menu.
+  2. In the Local Mode section at the top, copy the database path shown (e.g. `/path/to/data.sqlite`).
+  3. Paste the path into the input prompt, or set `"router_db_path": "/path/to/data.sqlite"` directly in `config.json`. Once verified, the path is saved automatically for future scans.
 
 ### Method 2: OAuth 2.0 Web Authorization
 
