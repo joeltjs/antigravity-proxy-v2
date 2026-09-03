@@ -20,6 +20,51 @@ import threading
 import urllib.request
 import urllib.parse
 import urllib.error
+import socket
+
+# WARP SOCKS5 Proxy for routing Google API requests through Cloudflare
+# Only outbound requests to Google APIs go through WARP. All other traffic stays local.
+WARP_SOCKS5_HOST = "127.0.0.1"
+WARP_SOCKS5_PORT = 40000
+WARP_ENABLED = os.environ.get("WARP_ENABLED", "true").lower() == "true"
+
+GOOGLE_API_DOMAINS = [
+    'daily-cloudcode-pa.googleapis.com',
+    'cloudcode-pa.googleapis.com',
+    'oauth2.googleapis.com',
+    'www.googleapis.com',
+    'generativelanguage.googleapis.com'
+]
+
+def _is_google_api(host):
+    return any(host.endswith(d) for d in GOOGLE_API_DOMAINS)
+
+if WARP_ENABLED:
+    try:
+        import socks as _socks_mod
+        _original_create_connection = socket.create_connection
+        
+        def _warp_create_connection(address, *args, **kwargs):
+            host, port = address
+            if _is_google_api(host):
+                return _socks_mod.create_connection(
+                    dest_pair=(host, port),
+                    proxy_type=_socks_mod.SOCKS5,
+                    proxy_addr=WARP_SOCKS5_HOST,
+                    proxy_port=WARP_SOCKS5_PORT,
+                    timeout=kwargs.get('timeout', 300)
+                )
+            return _original_create_connection(address, *args, **kwargs)
+        
+        socket.create_connection = _warp_create_connection
+        print(f"[WARP] SOCKS5 proxy enabled on {WARP_SOCKS5_HOST}:{WARP_SOCKS5_PORT} (Google API traffic only)")
+    except ImportError:
+        print("[WARP] PySocks not installed, using direct connection")
+        WARP_ENABLED = False
+else:
+    print("[WARP] Proxy disabled, using direct connection")
+import urllib.parse
+import urllib.error
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 CONFIG_PATH = "/home/ubuntu/ag-proxy/config.json"
@@ -1215,7 +1260,85 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
         if not self._check_auth(): return
 
-        if self.path == "/v1/api-keys/create" or self.path == "/v1/api-key/generate":
+        if self.path == "/api/import-9router":
+            body_raw, _ = self._read_body(64 * 1024)
+            custom_path = None
+            if body_raw:
+                try:
+                    req_data = json.loads(body_raw)
+                    custom_path = req_data.get("path", "").strip() or None
+                except Exception: pass
+
+            import sqlite3
+            candidate_paths = []
+            if custom_path:
+                candidate_paths.append(os.path.expanduser(custom_path))
+            
+            # Check configured path in config.json
+            saved_router_path = CONFIG.get("router_db_path")
+            if saved_router_path:
+                candidate_paths.append(os.path.expanduser(saved_router_path))
+
+            # Default search paths
+            candidate_paths.extend([
+                os.path.expanduser("~/.9router/db/data.sqlite"),
+                "/app/data/db/data.sqlite",
+                "/home/ubuntu/.9router/db/data.sqlite"
+            ])
+
+            found_db = None
+            for p in candidate_paths:
+                if os.path.exists(p) and os.path.isfile(p):
+                    found_db = p
+                    break
+
+            if not found_db:
+                self._send_json(404, {
+                    "error": {
+                        "message": "9router database not found in default locations. Please provide custom SQLite path.",
+                        "searched_paths": candidate_paths
+                    }
+                })
+                return
+
+            imported_count = 0
+            updated_count = 0
+            try:
+                conn = sqlite3.connect(f"file:{found_db}?mode=ro", uri=True)
+                cursor = conn.cursor()
+                rows = cursor.execute("SELECT email, data FROM providerConnections WHERE provider = 'antigravity'").fetchall()
+                
+                existing_emails = {a.email: a for a in ACCOUNT_STATES}
+                for email, data_str in rows:
+                    if not email: continue
+                    try:
+                        conn_data = json.loads(data_str) if isinstance(data_str, str) else {}
+                        rt = conn_data.get("refreshToken")
+                        if not rt: continue
+
+                        if email in existing_emails:
+                            existing_emails[email].refresh_token = rt
+                            updated_count += 1
+                        else:
+                            acc_obj = AccountState({"email": email, "refresh_token": rt, "disabled": False})
+                            ACCOUNT_STATES.append(acc_obj)
+                            imported_count += 1
+                    except Exception: pass
+                conn.close()
+
+                # Save to config.json and remember path
+                _save_accounts()
+                log_event("INFO", f"Imported {imported_count} new accounts ({updated_count} updated) from 9router at {found_db}")
+                self._send_json(200, {
+                    "success": True,
+                    "imported": imported_count,
+                    "updated": updated_count,
+                    "db_path": found_db,
+                    "total_accounts": len(ACCOUNT_STATES)
+                })
+            except Exception as e:
+                self._send_json(500, {"error": {"message": f"Failed to read 9router database: {str(e)}"}})
+            return
             body_raw, _ = self._read_body(64 * 1024)
             name = "API Key"
             if body_raw:

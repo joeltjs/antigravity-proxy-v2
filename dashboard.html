@@ -11,22 +11,22 @@
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background-color:#0b0c10;background-image:linear-gradient(to right,rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:24px 24px;background-attachment:fixed;color:#e2e8f0;min-height:100vh;padding:24px 16px}
   .wrap{max-width:1200px;margin:0 auto}
   .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;background:rgba(18,20,29,0.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);padding:16px 20px;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-  .header h1{font-size:22px;display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-0.4px;background:linear-gradient(135deg,#ffffff 40%,#60a5fa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 2px 10px rgba(96,165,250,0.25)}
-  .header h1 span.header-icon{-webkit-text-fill-color:initial}
-  .header .tag{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3);padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600}
-  .btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;text-decoration:none;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .15s ease}
-  .btn:hover{background:linear-gradient(135deg,#2563eb,#1d4ed8);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,0.3)}
+  .header h1{font-size:20px;font-weight:700;letter-spacing:-0.3px;color:#f8fafc}
+  .header h1 span.header-icon{color:#38bdf8}
+  .header .tag{background:rgba(56,189,248,0.1);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:#0284c7;color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .15s ease}
+  .btn:hover{background:#0369a1;transform:translateY(-1px);box-shadow:0 4px 12px rgba(2,132,199,0.3)}
   .btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
-  .btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626)}.btn-danger:hover{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+  .btn-danger{background:#dc2626}.btn-danger:hover{background:#b91c1c}
   .btn-ghost{background:rgba(255,255,255,0.05);color:#cbd5e1;border:1px solid rgba(255,255,255,0.08)}.btn-ghost:hover{background:rgba(255,255,255,0.1);color:#fff}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
-  .stat{background:rgba(18,20,29,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.25)}
-  .stat .num{font-size:26px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .stat{background:#0d111a;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;text-align:center}
+  .stat .num{font-size:24px;font-weight:700;color:#38bdf8}
   .stat .label{font-size:11px;color:#94a3b8;margin-top:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-  .card{background:rgba(18,20,29,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-  .card-title{font-size:15px;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;font-weight:800}
-  .card-title .icon{display:inline-block;margin-right:6px;-webkit-text-fill-color:initial;font-size:16px}
-  .card-title span.title-txt{background:linear-gradient(135deg,#ffffff 50%,#38bdf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .card{background:#0d111a;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;margin-bottom:20px}
+  .card-title{font-size:14px;color:#f8fafc;letter-spacing:.4px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;font-weight:700}
+  .card-title .icon{display:inline-block;margin-right:6px;font-size:15px}
+  .card-title span.title-txt{color:#f8fafc}
   .accounts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px}
   .acc-card{background:rgba(12,14,22,0.8);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;transition:all .2s ease}
   .acc-card.disabled{opacity:0.45;filter:blur(0.6px);background:rgba(8,9,14,0.6);border-color:rgba(255,255,255,0.03)}
@@ -115,6 +115,7 @@
   <div class="header">
     <h1> Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="importFrom9router()" title="Import accounts from local 9router SQLite database">Import 9router</button>
       <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">Models</button>
       <button class="btn btn-ghost btn-sm" id="strategy-btn" onclick="toggleStrategy()" title="Click to change routing mode">Change Mode</button>
       <button class="btn btn-ghost btn-sm" onclick="refreshQuota()">Refresh Quota</button>
@@ -219,6 +220,52 @@
 <script>
 // Auth: dashboard memakai httpOnly session cookie (di-set server saat login).
 // TIDAK ADA secret di JS/localStorage — cookie tidak bisa dibaca JavaScript.
+async function importFrom9router(customPath) {
+  Swal.fire({
+    title: 'Import from 9router',
+    text: 'Scanning local 9router SQLite database...',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  try {
+    const r = await apiFetch('/api/import-9router', {
+      method: 'POST',
+      body: JSON.stringify(customPath ? { path: customPath } : {})
+    });
+
+    if (r.ok) {
+      const d = await r.json();
+      Swal.fire({
+        icon: 'success',
+        title: 'Import Berhasil!',
+        text: `Berhasil mengimpor ${d.imported} akun baru (${d.updated} diupdate) dari ${d.db_path}`,
+        timer: 3000
+      });
+      loadQuota();
+    } else if (r.status === 404) {
+      const err = await r.json();
+      const { value: manualPath } = await Swal.fire({
+        title: '9router DB Tidak Ditemukan',
+        text: 'Database default tidak terdeteksi. Masukkan path absolut ke file data.sqlite 9router Anda:',
+        input: 'text',
+        inputPlaceholder: '/home/ubuntu/.9router/db/data.sqlite',
+        showCancelButton: true,
+        confirmButtonText: 'Scan Path Ini',
+        cancelButtonText: 'Batal'
+      });
+      if (manualPath) {
+        importFrom9router(manualPath);
+      }
+    } else {
+      const err = await r.json();
+      Swal.fire({ icon: 'error', title: 'Import Gagal', text: err.error?.message || 'Gagal membaca database 9router' });
+    }
+  } catch (e) {
+    Swal.fire({ icon: 'error', title: 'Error', text: e.message });
+  }
+}
+
 function showFullError(email, fullErr) {
   Swal.fire({
     title: 'Error Detail: ' + email,
