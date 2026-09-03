@@ -565,6 +565,8 @@ def _save_accounts():
 # ─── Model Mapping ────────────────────────────────────────────────────────────
 
 MODEL_MAP = {
+    "gemini-3.8-flash-high": "gemini-3.7-flash-tiered",
+    "gemini-3.8-flash-medium": "gemini-3.7-flash-tiered",
     "gemini-3.7-flash-high": "gemini-3.7-flash-tiered",
     "gemini-3.7-flash-medium": "gemini-3.7-flash-tiered",
     "gemini-3.6-flash-high": "gemini-3.6-flash-high",
@@ -771,6 +773,14 @@ def openai_to_antigravity(body):
     if temperature is not None: gen_config["temperature"] = temperature
     if top_p is not None: gen_config["topP"] = top_p
     reasoning_effort = body.get("reasoning_effort")
+    if not reasoning_effort:
+        if bare_model.endswith("-high"):
+            reasoning_effort = "high"
+        elif bare_model.endswith("-medium"):
+            reasoning_effort = "medium"
+        elif bare_model.endswith("-low"):
+            reasoning_effort = "low"
+
     if reasoning_effort:
         budget_map = {"low": 1024, "medium": 8192, "high": 24576}
         budget = budget_map.get(reasoning_effort, 8192)
