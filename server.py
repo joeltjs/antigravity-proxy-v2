@@ -565,8 +565,9 @@ def _save_accounts():
 # ─── Model Mapping ────────────────────────────────────────────────────────────
 
 MODEL_MAP = {
-    "gemini-3.8-flash-high": "gemini-3.7-flash-tiered",
-    "gemini-3.8-flash-medium": "gemini-3.7-flash-tiered",
+    "gemini-3.8-flash-high": "gemini-3.8-flash-tiered",
+    "gemini-3.8-flash-medium": "gemini-3.8-flash-tiered",
+    "gemini-3.8-flash-low": "gemini-3.8-flash-tiered",
     "gemini-3.7-flash-high": "gemini-3.7-flash-tiered",
     "gemini-3.7-flash-medium": "gemini-3.7-flash-tiered",
     "gemini-3.6-flash-high": "gemini-3.6-flash-high",
@@ -782,12 +783,16 @@ def openai_to_antigravity(body):
             reasoning_effort = "low"
 
     if reasoning_effort:
-        budget_map = {"low": 1024, "medium": 8192, "high": 24576}
-        budget = budget_map.get(reasoning_effort, 8192)
-        gen_config["thinkingConfig"] = {"thinkingBudget": budget}
-        # Claude requires max_tokens > thinking budget — bump if needed
-        if max_tokens <= budget:
-            gen_config["maxOutputTokens"] = budget + 4096
+        # Tiered models use thinkingLevel, others use thinkingBudget
+        if ag_model and "tiered" in str(ag_model):
+            gen_config["thinkingConfig"] = {"thinkingLevel": reasoning_effort}
+        else:
+            budget_map = {"low": 1024, "medium": 8192, "high": 24576}
+            budget = budget_map.get(reasoning_effort, 8192)
+            gen_config["thinkingConfig"] = {"thinkingBudget": budget}
+            # Claude requires max_tokens > thinking budget — bump if needed
+            if max_tokens <= budget:
+                gen_config["maxOutputTokens"] = budget + 4096
     tools = []
     for tool in body.get("tools", []):
         if tool.get("type") == "function":

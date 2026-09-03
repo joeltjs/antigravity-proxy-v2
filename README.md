@@ -9,7 +9,7 @@ OpenAI-compatible reverse proxy that aggregates multiple Google Antigravity acco
 
 ## What's New in v2.2.0
 
-- **Gemini 3.8 Flash Support:** Added model mappings for `gemini-3.8-flash-high` and `gemini-3.8-flash-medium` with automatic reasoning budget translation.
+- **Gemini 3.8 Flash Native Support:** Native integration for `gemini-3.8-flash-tiered` with dynamic `thinkingLevel` (`high`, `medium`, `low`).
 - **1-Click & Fallback 9router Importer:** Instant SQLite database detection with automated fallback prompt for custom database paths.
 - **Cloudflare WARP SOCKS5 Routing:** Built-in proxy routing for `*.googleapis.com` to bypass datacenter IP restrictions.
 - **Auto-Reset Account Error State:** Successful requests automatically clear error badges and reset failure counters.
@@ -100,16 +100,16 @@ Or run as a systemd background service.
 
 ## Supported Models
 
-| Model Name (OpenAI Format) | Upstream Antigravity Target | Thinking / Reasoning Budget |
+| Model Name (OpenAI Format) | Upstream Antigravity Target | Thinking Configuration |
 |---|---|---|
-| `gemini-3.8-flash-high` | `gemini-3.7-flash-tiered` | High (24,576 tokens) |
-| `gemini-3.8-flash-medium` | `gemini-3.7-flash-tiered` | Medium (8,192 tokens) |
-| `gemini-3.7-flash-high` | `gemini-3.7-flash-tiered` | High (24,576 tokens) |
-| `gemini-3.7-flash-medium` | `gemini-3.7-flash-tiered` | Medium (8,192 tokens) |
-| `gemini-3.6-flash-high` | `gemini-3.6-flash-high` | High (24,576 tokens) |
-| `gemini-3.1-pro-high` | `gemini-pro-agent` | High (24,576 tokens) |
-| `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` | High (Thinking enabled) |
-| `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` | High (Thinking enabled) |
+| `gemini-3.8-flash-high` | `gemini-3.8-flash-tiered` | `thinkingLevel: high` |
+| `gemini-3.8-flash-medium` | `gemini-3.8-flash-tiered` | `thinkingLevel: medium` |
+| `gemini-3.7-flash-high` | `gemini-3.7-flash-tiered` | `thinkingLevel: high` |
+| `gemini-3.7-flash-medium` | `gemini-3.7-flash-tiered` | `thinkingLevel: medium` |
+| `gemini-3.6-flash-high` | `gemini-3.6-flash-high` | `thinkingBudget: 24576` |
+| `gemini-3.1-pro-high` | `gemini-pro-agent` | `thinkingBudget: 24576` |
+| `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` | Thinking enabled |
+| `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` | Thinking enabled |
 
 ---
 
