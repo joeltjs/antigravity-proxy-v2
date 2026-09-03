@@ -41,19 +41,25 @@ Authenticate accounts directly via your browser:
 2. Click "Add Account via OAuth".
 3. Sign in with your Google account and grant permissions.
 
-### Method 3: Direct Refresh Token Entry
+### Method 3: Manual Refresh Token Entry
 
-Add accounts directly into `config.json`:
-```json
-{
-  "accounts": [
-    {
-      "email": "user@example.com",
-      "refresh_token": "1//0g..."
-    }
-  ]
-}
-```
+You can add refresh tokens directly via Web UI or configuration file:
+
+- **Via Dashboard UI:**  
+  Click **"Add Account"** in the web dashboard navigation bar, enter your Google account email and paste the refresh token (`1//0g...`).
+
+- **Via `config.json`:**  
+  Add account entries directly to the `accounts` array:
+  ```json
+  {
+    "accounts": [
+      {
+        "email": "user@example.com",
+        "refresh_token": "1//0g..."
+      }
+    ]
+  }
+  ```
 
 ---
 
