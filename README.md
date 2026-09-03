@@ -1,9 +1,19 @@
-# Antigravity Multi-Account Proxy v2.1.1
+# Antigravity Multi-Account Proxy v2.2.0
 
-![Version](https://img.shields.io/badge/version-2.1.1-0284c7)
+![Version](https://img.shields.io/badge/version-2.2.0-0284c7)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 OpenAI-compatible reverse proxy that aggregates multiple Google Antigravity accounts into a single load-balanced endpoint with automatic rate-limit failover, quota tracking, session authentication, and multi-API key support.
+
+---
+
+## What's New in v2.2.0
+
+- **Gemini 3.8 Flash Support:** Added model mappings for `gemini-3.8-flash-high` and `gemini-3.8-flash-medium` with automatic upstream routing.
+- **1-Click & Fallback 9router Importer:** Instant SQLite database detection with automated fallback prompt for custom database paths.
+- **Cloudflare WARP SOCKS5 Routing:** Built-in proxy routing for `*.googleapis.com` to bypass datacenter IP restrictions.
+- **Auto-Reset Account Error State:** Successful requests automatically clear error badges and reset failure counters.
+- **UI Design System Upgrade:** Modern Deep Ocean theme with Electric Cyan headers and distinct routing mode badges.
 
 ---
 
@@ -46,7 +56,7 @@ Authenticate accounts directly via your browser:
 You can add refresh tokens directly via Web UI or configuration file:
 
 - **Via Dashboard UI:**  
-  Click **"Add Account"** in the web dashboard navigation bar, enter your Google account email and paste the refresh token (`1//0g...`).
+  Click "Add Account" in the web dashboard navigation bar, enter your Google account email and paste the refresh token (`1//0g...`).
 
 - **Via `config.json`:**  
   Add account entries directly to the `accounts` array:
@@ -92,10 +102,12 @@ Or run as a systemd background service.
 
 | Model Name (OpenAI Format) | Upstream Model Mapping |
 |---|---|
-| `gemini-3.7-flash-high` | `gemini-3.7-flash-high` |
-| `gemini-3.7-flash-medium` | `gemini-3.7-flash-medium` |
-| `gemini-3.6-flash-high` | `gemini-3.6-flash-high` |
-| `gemini-pro-agent` | `gemini-3.1-pro`
+| `gemini-3.8-flash-high` | `gemini-3.7-flash-tiered` |
+| `gemini-3.8-flash-medium` | `gemini-3.7-flash-tiered` |
+| `gemini-3.7-flash-high` | `gemini-2.5-flash` |
+| `gemini-3.7-flash-medium` | `gemini-2.5-flash` |
+| `gemini-3.6-flash-high` | `gemini-2.5-flash` |
+| `gemini-3.1-pro-high` | `gemini-pro-agent` |
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` |
 | `claude-opus-4-6-thinking` | `claude-opus-4-6-thinking` |
 
