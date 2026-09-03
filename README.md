@@ -6,39 +6,41 @@ OpenAI-compatible reverse proxy that aggregates multiple Google Antigravity acco
 
 ## Features
 
-- **Multi-Account Aggregation:** Pool multiple Google AI accounts into a single unified endpoint.
-- **Auto-Failover on Rate Limits (429):** Applies a 5-minute cooldown and seamlessly reroutes to available accounts.
-- **Multiple API Keys Management:** Generate and revoke client API keys (`/v1/api-keys`) directly via dashboard.
-- **Secure Web Dashboard:** Real-time quota metrics, usage counters, and account controls protected by session authentication.
-- **WARP SOCKS5 Routing:** Built-in support to route upstream API calls through local proxy when datacenter IPs are restricted.
+- Multi-Account Aggregation: Pool multiple Google AI accounts into a single unified endpoint.
+- Auto-Failover on Rate Limits (429): Applies a 5-minute cooldown and seamlessly reroutes to available accounts.
+- Multiple API Keys Management: Generate and revoke client API keys (/v1/api-keys) directly via dashboard.
+- Secure Web Dashboard: Real-time quota metrics, usage counters, and account controls protected by session authentication.
+- WARP SOCKS5 Routing: Built-in support to route upstream API calls through local proxy when datacenter IPs are restricted.
 
 ---
 
-## 📥 Account Setup & Import Methods
+## Account Setup & Import Methods
 
 There are 3 standard ways to add accounts:
 
-### Method 1: Import from 9router (1-Click or Manual)
+### Method 1: Import from 9router (Automatic or Manual)
 
-- **1-Click Import:**  
-  Click **"📥 Import from 9router"** in the web dashboard navigation bar. The server automatically scans default SQLite database locations:
+- Automatic Scan:
+  Click "Import 9router" in the web dashboard navigation bar. The server automatically scans default SQLite database locations:
   - `~/.9router/db/data.sqlite` (Native install)
   - `/app/data/db/data.sqlite` (Docker container)
 
-- **Manual Path Input / Where to Find Database Location:**  
-  If your 9router database is stored in a custom path:
-  1. Open **9router Web UI** ➔ Go to **Settings** (`/settings`).
-  2. Look at the **Local Mode** section at the very top of the page.
-  3. Copy your database path displayed there (e.g., `/custom/path/data.sqlite`).
-  4. Enter this path into the ag-proxy dashboard prompt when requested. Once verified, the path is automatically saved to `config.json` (`router_db_path`) for future scans.
+- Manual Input (If default locations are not found):
+  If the automatic scan cannot find the database, a path input prompt will appear. You can find your database location in 9router:
+  1. Open 9router Web UI -> Settings (/settings).
+  2. Check the Local Mode section at the top.
+  3. Copy the database path shown there (e.g. `/path/to/data.sqlite`).
+  4. Paste it into the input prompt, or set `"router_db_path": "/path/to/data.sqlite"` directly in `config.json`. Once verified, the path is saved automatically for future scans.
 
 ### Method 2: OAuth 2.0 Web Authorization
+
 Authenticate accounts directly via your browser:
 1. Open the dashboard at `http://localhost:20130/`.
-2. Click **"Add Account via OAuth"**.
+2. Click "Add Account via OAuth".
 3. Sign in with your Google account and grant permissions.
 
 ### Method 3: Direct Refresh Token Entry
+
 Add accounts directly into `config.json`:
 ```json
 {
@@ -53,7 +55,7 @@ Add accounts directly into `config.json`:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Installation
 ```bash
@@ -78,7 +80,7 @@ Or run as a systemd background service.
 
 ---
 
-## 🛠️ Supported Models
+## Supported Models
 
 | Model Name (OpenAI Format) | Upstream Model Mapping |
 |---|---|
@@ -90,14 +92,14 @@ Or run as a systemd background service.
 
 ---
 
-## 🔧 Troubleshooting & Geo-restriction
+## Troubleshooting & Geo-restriction
 
 ### `HTTP 400: User location is not supported for the API use`
-Occurs when the server IP region is restricted by the upstream API.
-👉 Follow the setup guide: [WARP_SETUP.md](WARP_SETUP.md)
+This error occurs when the server IP region is restricted by the upstream API.
+Follow the setup guide: [WARP_SETUP.md](WARP_SETUP.md)
 
 ---
 
-## 📄 License
+## License
 
-MIT License © 2026 Julian Efendi
+MIT License (c) 2026 Julian Efendi
