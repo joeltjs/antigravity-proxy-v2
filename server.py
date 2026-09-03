@@ -1007,6 +1007,19 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._serve_dashboard()
             return
 
+        if self.path == "/login" or self.path == "/login.html":
+            login_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "login.html")
+            if os.path.exists(login_path):
+                with open(login_path, "rb") as lf:
+                    content = lf.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self._security_headers()
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         if self.path == "/auth/login":
             self._oauth_login()
             return
@@ -1113,9 +1126,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(html)))
             self._security_headers()
-            # Content-Security-Policy: block inline injection & external scripts
+            # Content-Security-Policy: allow self, cdn.jsdelivr.net for SweetAlert2, and cloudflare insights
             self.send_header("Content-Security-Policy",
-                "default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'")
+                "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self'")
             # Fresh per-session token (httpOnly — JS can't read it)
             self.send_header("Set-Cookie", f"ag_session={_issue_session_token()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400")
             self.end_headers()

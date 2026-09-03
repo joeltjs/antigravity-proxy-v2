@@ -11,9 +11,11 @@
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;background-color:#0b0c10;background-image:linear-gradient(to right,rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:24px 24px;background-attachment:fixed;color:#e2e8f0;min-height:100vh;padding:24px 16px}
   .wrap{max-width:1200px;margin:0 auto}
   .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;background:rgba(18,20,29,0.75);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);padding:16px 20px;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-  .header h1{font-size:20px;font-weight:700;letter-spacing:-0.3px;color:#f8fafc}
-  .header h1 span.header-icon{color:#38bdf8}
-  .header .tag{background:rgba(56,189,248,0.1);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .header h1{font-size:20px;font-weight:700;letter-spacing:-0.3px;color:#ffffff}
+  .header h1 span.header-title-main{color:#38bdf8;font-weight:800}
+  .header .tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+  .tag-roundrobin{background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)}
+  .tag-sticky{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)}
   .btn{display:inline-flex;align-items:center;gap:6px;background:#0284c7;color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,0.1);cursor:pointer;transition:all .15s ease}
   .btn:hover{background:#0369a1;transform:translateY(-1px);box-shadow:0 4px 12px rgba(2,132,199,0.3)}
   .btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
@@ -113,7 +115,7 @@
   </div>
 
   <div class="header">
-    <h1> Antigravity Proxy <span class="tag" id="strategy-tag">round-robin</span></h1>
+    <h1><span class="header-title-main">Antigravity</span> Proxy <span class="tag tag-roundrobin" id="strategy-tag">round-robin</span></h1>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="importFrom9router()" title="Import accounts from local 9router SQLite database">Import 9router</button>
       <button class="btn btn-ghost btn-sm" onclick="showAllModels()" title="List all upstream models per pool">Models</button>
@@ -229,22 +231,23 @@ async function importFrom9router(customPath) {
   });
 
   try {
-    const r = await apiFetch('/api/import-9router', {
+    const res = await fetch('/api/import-9router', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(customPath ? { path: customPath } : {})
     });
 
-    if (r.ok) {
-      const d = await r.json();
-      Swal.fire({
+    if (res.ok) {
+      const d = await res.json();
+      await Swal.fire({
         icon: 'success',
         title: 'Import Berhasil!',
         text: `Berhasil mengimpor ${d.imported} akun baru (${d.updated} diupdate) dari ${d.db_path}`,
         timer: 3000
       });
-      loadQuota();
-    } else if (r.status === 404) {
-      const err = await r.json();
+      load();
+    } else if (res.status === 404) {
+      const err = await res.json();
       const { value: manualPath } = await Swal.fire({
         title: '9router DB Tidak Ditemukan',
         text: 'Database default tidak terdeteksi. Masukkan path absolut ke file data.sqlite 9router Anda:',
@@ -258,7 +261,7 @@ async function importFrom9router(customPath) {
         importFrom9router(manualPath);
       }
     } else {
-      const err = await r.json();
+      const err = await res.json();
       Swal.fire({ icon: 'error', title: 'Import Gagal', text: err.error?.message || 'Gagal membaca database 9router' });
     }
   } catch (e) {
@@ -407,7 +410,10 @@ async function load() {
   try {
     const data = await api('/v1/accounts');
     const accs = data.accounts || [];
-    document.getElementById('strategy-tag').textContent = data.strategy || 'round-robin';
+    const sTag = document.getElementById('strategy-tag');
+    const strat = data.strategy || 'round-robin';
+    sTag.textContent = strat;
+    sTag.className = 'tag ' + (strat === 'sticky' ? 'tag-sticky' : 'tag-roundrobin');
     currentStrategy = data.strategy || 'round-robin';
     let totalReq=0, totalErr=0, active=0;
     const html = accs.length === 0
@@ -480,7 +486,9 @@ async function toggleStrategy() {
   const d = await r.json();
   if (d.ok) {
     currentStrategy = d.strategy;
-    document.getElementById('strategy-tag').textContent = d.strategy;
+    const sTag = document.getElementById('strategy-tag');
+    sTag.textContent = d.strategy;
+    sTag.className = 'tag ' + (d.strategy === 'sticky' ? 'tag-sticky' : 'tag-roundrobin');
     showToast(d.strategy === 'sticky'
       ? ' Sticky mode: use 1 account until rate limit, then switch'
       : ' Round-robin mode: alternate accounts per request');
