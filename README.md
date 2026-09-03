@@ -19,8 +19,18 @@ OpenAI-compatible reverse proxy that aggregates multiple Google Antigravity acco
 There are 3 standard ways to add accounts:
 
 ### Method 1: Import from 9router (1-Click or Manual)
-- **1-Click Import:** Click **"📥 Import from 9router"** in the web dashboard navigation bar. The server automatically scans default SQLite database locations (`~/.9router/db/data.sqlite` or `/app/data/db/data.sqlite` in Docker).
-- **Manual Input:** If the database is in a custom path, find your database location in 9router UI (**Settings** ➔ **Local Mode**), then input the path into the dashboard prompt or copy `refreshToken` entries under `providerConnections` (`provider = 'antigravity'`) into `config.json`.
+
+- **1-Click Import:**  
+  Click **"📥 Import from 9router"** in the web dashboard navigation bar. The server automatically scans default SQLite database locations:
+  - `~/.9router/db/data.sqlite` (Native install)
+  - `/app/data/db/data.sqlite` (Docker container)
+
+- **Manual Path Input / Where to Find Database Location:**  
+  If your 9router database is stored in a custom path:
+  1. Open **9router Web UI** ➔ Go to **Settings** (`/settings`).
+  2. Look at the **Local Mode** section at the very top of the page.
+  3. Copy your database path displayed there (e.g., `/custom/path/data.sqlite`).
+  4. Enter this path into the ag-proxy dashboard prompt when requested. Once verified, the path is automatically saved to `config.json` (`router_db_path`) for future scans.
 
 ### Method 2: OAuth 2.0 Web Authorization
 Authenticate accounts directly via your browser:

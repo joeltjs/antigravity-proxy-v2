@@ -1327,6 +1327,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 conn.close()
 
                 # Save to config.json and remember path
+                CONFIG["router_db_path"] = found_db
                 _save_accounts()
                 log_event("INFO", f"Imported {imported_count} new accounts ({updated_count} updated) from 9router at {found_db}")
                 self._send_json(200, {
