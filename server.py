@@ -785,11 +785,17 @@ def openai_to_antigravity(body):
     if reasoning_effort:
         # Tiered models use thinkingLevel, others use thinkingBudget
         if ag_model and "tiered" in str(ag_model):
-            gen_config["thinkingConfig"] = {"thinkingLevel": reasoning_effort}
+            gen_config["thinkingConfig"] = {
+                "thinkingLevel": reasoning_effort,
+                "includeThoughts": True
+            }
         else:
             budget_map = {"low": 1024, "medium": 8192, "high": 24576}
             budget = budget_map.get(reasoning_effort, 8192)
-            gen_config["thinkingConfig"] = {"thinkingBudget": budget}
+            gen_config["thinkingConfig"] = {
+                "thinkingBudget": budget,
+                "includeThoughts": True
+            }
             # Claude requires max_tokens > thinking budget — bump if needed
             if max_tokens <= budget:
                 gen_config["maxOutputTokens"] = budget + 4096
