@@ -578,11 +578,19 @@ def _save_accounts():
 # ─── Model Mapping ────────────────────────────────────────────────────────────
 
 MODEL_MAP = {
+    # Gemini 3.8 Series: upstream Google engine is 'gemini-3.8-flash-tiered'
+    # Reasoning level (high/medium) is injected via generationConfig.thinkingConfig.thinkingLevel
     "gemini-3.8-flash-high": "gemini-3.8-flash-tiered",
     "gemini-3.8-flash-medium": "gemini-3.8-flash-tiered",
+
+    # Gemini 3.7 Series: upstream Google engine is 'gemini-3.7-flash-tiered'
     "gemini-3.7-flash-high": "gemini-3.7-flash-tiered",
+
+    # Gemini 3.6 & 3.1 Pro Series
     "gemini-3.6-flash-high": "gemini-3.6-flash-high",
     "gemini-3.1-pro-high": "gemini-pro-agent",
+
+    # Claude Series: thinking enabled natively
     "claude-sonnet-4-6-thinking": "claude-sonnet-4-6",
     "claude-opus-4-6-thinking": "claude-opus-4-6-thinking",
 }
