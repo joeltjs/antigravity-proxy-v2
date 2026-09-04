@@ -844,7 +844,7 @@ def antigravity_to_openai(ag_response, model_name, request_id):
     if candidates:
         parts = candidates[0].get("content", {}).get("parts", [])
         for part in parts:
-            if part.get("thought") and part.get("text"):
+            if (part.get("thought") or part.get("thoughtSignature")) and part.get("text"):
                 reasoning_content += part["text"]
             elif part.get("text"):
                 content += part["text"]
@@ -887,7 +887,7 @@ def antigravity_chunk_to_openai(chunk_data, model_name, request_id, state):
     reasoning = ""
     tool_calls = []
     for part in parts:
-        if part.get("thought") and part.get("text"):
+        if (part.get("thought") or part.get("thoughtSignature")) and part.get("text"):
             reasoning += part["text"]
         elif part.get("text"):
             content += part["text"]
