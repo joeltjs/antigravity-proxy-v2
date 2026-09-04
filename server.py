@@ -17,6 +17,19 @@ import os
 import secrets
 import time
 import threading
+import socks
+import socket
+
+_orig_create_connection = socket.create_connection
+
+def _warp_create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None):
+    host, port = address
+    if 'googleapis.com' in host:
+        return socks.create_connection(dest_pair=(host, port), proxy_type=socks.SOCKS5, proxy_addr='127.0.0.1', proxy_port=40000, timeout=timeout)
+    return _orig_create_connection(address, timeout, source_address)
+
+socket.create_connection = _warp_create_connection
+
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -567,9 +580,7 @@ def _save_accounts():
 MODEL_MAP = {
     "gemini-3.8-flash-high": "gemini-3.8-flash-tiered",
     "gemini-3.8-flash-medium": "gemini-3.8-flash-tiered",
-    "gemini-3.8-flash-low": "gemini-3.8-flash-tiered",
     "gemini-3.7-flash-high": "gemini-3.7-flash-tiered",
-    "gemini-3.7-flash-medium": "gemini-3.7-flash-tiered",
     "gemini-3.6-flash-high": "gemini-3.6-flash-high",
     "gemini-3.1-pro-high": "gemini-pro-agent",
     "claude-sonnet-4-6-thinking": "claude-sonnet-4-6",

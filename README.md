@@ -9,7 +9,7 @@ OpenAI-compatible reverse proxy that aggregates multiple Google Antigravity acco
 
 ## What's New in v2.2.0
 
-- **Gemini 3.8 Flash Native Support:** Native integration for `gemini-3.8-flash-tiered` with dynamic `thinkingLevel` (`high`, `medium`, `low`).
+- **Gemini 3.8 Flash Native Support:** Native integration for `gemini-3.8-flash-tiered` with dynamic `thinkingLevel` (`high`, `medium`).
 - **1-Click & Fallback 9router Importer:** Instant SQLite database detection with automated fallback prompt for custom database paths.
 - **Cloudflare WARP SOCKS5 Routing:** Built-in proxy routing for `*.googleapis.com` to bypass datacenter IP restrictions.
 - **Auto-Reset Account Error State:** Successful requests automatically clear error badges and reset failure counters.
@@ -105,7 +105,6 @@ Or run as a systemd background service.
 | `gemini-3.8-flash-high` | `gemini-3.8-flash-tiered` | `thinkingLevel: high` |
 | `gemini-3.8-flash-medium` | `gemini-3.8-flash-tiered` | `thinkingLevel: medium` |
 | `gemini-3.7-flash-high` | `gemini-3.7-flash-tiered` | `thinkingLevel: high` |
-| `gemini-3.7-flash-medium` | `gemini-3.7-flash-tiered` | `thinkingLevel: medium` |
 | `gemini-3.6-flash-high` | `gemini-3.6-flash-high` | `thinkingBudget: 24576` |
 | `gemini-3.1-pro-high` | `gemini-pro-agent` | `thinkingBudget: 24576` |
 | `claude-sonnet-4-6-thinking` | `claude-sonnet-4-6` | Thinking enabled |
